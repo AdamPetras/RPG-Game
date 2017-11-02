@@ -1,0 +1,3 @@
+Implementovat dialog a odhození itemù
+Aktuvuju spell z knihy a zavøu nedokonèí se
+Poøešit pokud klikám tak objekt Graphics mi ruší raycasty

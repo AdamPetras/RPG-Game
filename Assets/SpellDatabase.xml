@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--
+Texture2D Icon { get; set; }
+string Name { get; set; }
+int LevelToAccess { get; set; }
+int GoldToAccess { get; set; }
+float ManaCost { get; set; }
+float Range { get; set; }
+float Cooldown { get; set; }
+ESpell SpellType { get; set; }
+float Duration { get; set; }
+IBuffSpell.Skill { get; set; }
+IBuffSpell.PercentageIncrease { get; set; }
+IPassiveSpell.Skill { get; set; }
+IPassiveSpell.PercentageIncrease { get; set; }
+float PercentageDamage { get; set; }
+-->
+<Root>
+  <Spell>
+    <ID>1</ID>
+    <Name>PowerHit</Name>
+    <Description>This spell is buff</Description>
+    <LevelToAccess>1</LevelToAccess>
+    <GoldToAccess>0</GoldToAccess>
+    <ManaCost>2</ManaCost>
+    <Range>1</Range>
+    <Cooldown>10</Cooldown>
+    <SpellType>Buff</SpellType>
+    <Duration>3</Duration>
+    <Skill>Constitution</Skill>
+    <PercentageIncrease>150</PercentageIncrease>
+    <PercentageDamage>0</PercentageDamage>
+  </Spell>
+  <Spell>
+    <ID>2</ID>
+    <Name>MortalBlade</Name>
+    <Description>This spell is passive</Description>
+    <LevelToAccess>2</LevelToAccess>
+    <GoldToAccess>0</GoldToAccess>
+    <ManaCost>2</ManaCost>
+    <Range>1</Range>
+    <Cooldown>4</Cooldown>
+    <SpellType>Passive</SpellType>
+    <Duration>0</Duration>
+    <Skill>Constitution</Skill>
+    <PercentageIncrease>150</PercentageIncrease>
+    <PercentageDamage>0</PercentageDamage>
+  </Spell>
+  <Spell>
+    <ID>3</ID>
+    <Name>BloodStorm</Name>
+    <Description>This spell is damage</Description>
+    <LevelToAccess>1</LevelToAccess>
+    <GoldToAccess>0</GoldToAccess>
+    <ManaCost>2</ManaCost>
+    <Range>1</Range>
+    <Cooldown>4</Cooldown>
+    <SpellType>Damage</SpellType>
+    <Duration>0</Duration>
+    <Skill></Skill>
+    <PercentageIncrease>0</PercentageIncrease>
+    <PercentageDamage>200</PercentageDamage>
+  </Spell>
+</Root>

@@ -1,0 +1,7 @@
+#001 Player gamebject is null [ComponentInventory,GameSettings]
+#002 Inventory is full or inventory isnt created [SlotManagement]
+#003 Armor gear is full or armor slots isnt created [SlotManagement]
+#004 Inventory is full [QuestMaster]
+#005 Repaired maximum stack of item in quest cause it is exceeded [QuestObject-QuestItem]
+#006 Armor item is null i cant add stats [SlotManagement]
+#007 Item is not type of armor or weapon [SlotManagement]
