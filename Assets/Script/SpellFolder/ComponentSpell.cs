@@ -34,11 +34,15 @@ namespace Assets.Script.SpellFolder
             SpellList.Add(this);
             isCasting = false;
             cantCast = false;
+            gameObject.GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 1);
             GetComponent<Button>().onClick.AddListener(delegate
             {
                 if (Conditions(Spell.ManaCost))
                     StartCoroutine(PreCast());
-                else if (!Spell.Unlocked) Spell.Unlock(gameObject);
+                else if (!Spell.Unlocked)
+                {
+                    Spell.Unlock(gameObject);
+                }
             });
             _spellBook = GameObject.Find("Graphics").transform.Find("SpellBook").gameObject;
         }

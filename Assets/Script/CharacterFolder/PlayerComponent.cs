@@ -31,6 +31,7 @@ namespace Assets.Script.CharacterFolder
         public int Level { get; set; }
         public string Name { get; set; }
         public bool Created { get; set; }
+        public long Money { get; set; }
         public Vector3 SavedPosition { get; set; }
         public Quaternion SavedRotation { get; set; }
         public ESubtype Weapon { private get; set; }

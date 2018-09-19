@@ -55,6 +55,7 @@ namespace Assets.Script.SpellFolder
         private float _savedValue;      
         private GameObject _instantiateBuff;
         private GameObject dialog;
+        private static GameObject staticDialog;
         public bool IWantToDestroy { get; set; }
         public Spell(Dictionary<string, string> spell)
         {
@@ -124,8 +125,10 @@ namespace Assets.Script.SpellFolder
             return Database.SpellDatabase.Find(s => s.ID == id);
         }
 
-        public void Unlock(GameObject gameObject)
+        public void Unlock(GameObject spellObject)
         {
+            if(staticDialog != null)
+                GameObject.Destroy(staticDialog);
             if (dialog != null)
                 return;
             GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
@@ -138,13 +141,15 @@ namespace Assets.Script.SpellFolder
                 return;
             }
             dialog = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/DialogWindow"));
+            staticDialog = dialog;
             Transform bckg = dialog.transform.Find("Background");
             bckg.Find("Text").GetComponent<Text>().text = "Do you want to unlock this spell for " + GoldToAccess + " golds?";
-            bckg.Find("Yes").GetComponent<Button>().onClick.AddListener(delegate { OnYes(dialog); });
+            bckg.Find("Yes").GetComponent<Button>().onClick.AddListener(delegate { OnYes(dialog, spellObject); });
             bckg.Find("No").GetComponent<Button>().onClick.AddListener(delegate { GameObject.Destroy(dialog); });
+            bckg.Find("Exit").GetComponent<Button>().onClick.AddListener(delegate { GameObject.Destroy(dialog); });
         }
 
-        private void OnYes(GameObject dialog)
+        private void OnYes(GameObject dialog, GameObject spellObject)
         {
 
             if (!SlotManagement.AreTheseMoneyEnough(GoldToAccess))
@@ -154,6 +159,7 @@ namespace Assets.Script.SpellFolder
             }
             SlotManagement.MoneyWithdraw(GoldToAccess);
             Unlocked = true;
+            spellObject.GetComponent<Image>().color = new Color(1f, 1f, 1f, 1);
             GameObject.Destroy(dialog);
         }
 
