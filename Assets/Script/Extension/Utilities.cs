@@ -9,6 +9,8 @@ using Assets.Scripts;
 using Assets.Scripts.InventoryFolder;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace Assets.Script.Extension
 {
@@ -17,12 +19,28 @@ namespace Assets.Script.Extension
         public static bool _dragging;
         private static Vector2 _startDrag;
         private static Vector2 _dragPosition;
+        private static readonly GameObject CraftItemPrefab = Resources.Load("Prefab/Item") as GameObject;
         public Utilities()
         {
             _dragging = false;
             _startDrag = Vector2.zero;
             _dragPosition = Vector2.zero;
+            
         }
+
+        public static GameObject InstatiateItem(NewItem item, string quantity, Transform parent)
+        {
+            GameObject itemObject = Object.Instantiate(CraftItemPrefab);
+            if (item.Icon != null)
+                NewItem.SetStats(itemObject, item);
+            itemObject.GetComponent<InventoryMouseHandler>().CanIMove = false;
+            if (Int32.Parse(quantity) > 1)
+                itemObject.transform.Find("Stack").GetComponent<Text>().text = quantity;
+            itemObject.transform.SetParent(parent, true);
+            itemObject.transform.localScale = Vector3.one;
+            return itemObject;
+        }
+
         public static Rect? DragAndDrop(Rect draggingRect, ref Vector2 position)
         {
             _dragPosition = position;

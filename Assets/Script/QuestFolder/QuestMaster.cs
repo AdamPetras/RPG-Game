@@ -278,12 +278,7 @@ namespace Assets.Script.QuestFolder
                 {
                     foreach (QuestItem qItem in quest.ItemReward)
                     {
-                        GameObject qItemObject = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/QuestRewardItem"),
-                            _questInfoPanel.transform, false);
-                        qItemObject.GetComponent<Image>().sprite = qItem.Item.Icon;
-                        if (qItem.Quantity > 1)
-                            qItemObject.transform.Find("Stack").GetComponent<Text>().text = qItem.Quantity.ToString();
-                        _questItemReward.Add(qItemObject);
+                        _questItemReward.Add(Utilities.InstatiateItem(qItem.Item, qItem.Quantity.ToString(), _questInfoPanel.transform));
                     }
                 }
                 moneyExpPanel.SetAsLastSibling();
@@ -305,10 +300,7 @@ namespace Assets.Script.QuestFolder
                     tmp += "deliver";
                     if (quest.ItemToDeliver != null)
                     {
-                        GameObject obj = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/QuestItemNeed"),
-                            _todoPanel.transform, false);
-                        obj.GetComponent<Image>().sprite = quest.ItemToDeliver.Icon;
-                        obj.transform.Find("Stack").GetComponent<Text>().text = quest.ItemToDeliveryQuantity.ToString();
+                        _questItemReward.Add(Utilities.InstatiateItem(quest.ItemToDeliver, quest.ItemToDeliveryQuantity.ToString(), _todoPanel.transform));
                     }
                     else
                         tmp += " some information";

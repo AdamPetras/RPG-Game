@@ -26,7 +26,6 @@ namespace Assets.Scripts.InventoryFolder.CraftFolder
     {
         public NewItem SelectedItem { get; set; }
         private GetCraftComponent _getCraftComponent;
-        private GameObject _craftItemPrefab;
         private List<GameObject> _objectList;
         private PlayerComponent _playerComponent;
         public static bool ExpChanged = false;
@@ -35,7 +34,7 @@ namespace Assets.Scripts.InventoryFolder.CraftFolder
             _getCraftComponent = getCraftComponent;
             _getCraftComponent.GetCraftButton().onClick.AddListener(AddToInventory);
             _objectList = new List<GameObject>();
-            _craftItemPrefab = Resources.Load("Prefab/Item") as GameObject;
+
         }
 
         public void ItemClicked(PlayerComponent playerComponent)
@@ -48,10 +47,10 @@ namespace Assets.Scripts.InventoryFolder.CraftFolder
             }
             foreach (CraftItem craftItem in SelectedItem.CraftItems)
             {
-                InstatiateItem(NewItem.IdToItem(craftItem.ID), SelectedItem.CraftItems[index].NumberOfItems.ToString(), _getCraftComponent.GetCraftNeedPanel());
+                _objectList.Add(Utilities.InstatiateItem(NewItem.IdToItem(craftItem.ID), SelectedItem.CraftItems[index].NumberOfItems.ToString(), _getCraftComponent.GetCraftNeedPanel()));
                 index++;
             }
-            InstatiateItem(NewItem.IdToItem(SelectedItem.ID), SelectedItem.Quantity.ToString(), _getCraftComponent.GetProductPanel());
+            _objectList.Add(Utilities.InstatiateItem(NewItem.IdToItem(SelectedItem.ID), SelectedItem.Quantity.ToString(), _getCraftComponent.GetProductPanel()));
             _getCraftComponent.GetTextNeedLevel().GetComponent<Text>().text =SelectedItem.EProfession+" level need : "+
                 SelectedItem.ProfesionLevelNeed;
             _getCraftComponent.GetCraftItemName().GetComponent<Text>().color = Utilities.ColorByItemRank(SelectedItem.ERank);
@@ -65,18 +64,7 @@ namespace Assets.Scripts.InventoryFolder.CraftFolder
                 s + "Sell price: " + SelectedItem.SellPrice;
         }
 
-        private void InstatiateItem(NewItem item, string text, Transform parent)
-        {
-            GameObject itemObject = Object.Instantiate(_craftItemPrefab);
-            _objectList.Add(itemObject);
-            if (item.Icon != null)
-                NewItem.SetStats(itemObject,item);           
-            itemObject.GetComponent<InventoryMouseHandler>().CanIMove = false;
-            if(Int32.Parse(text)>1)
-            itemObject.transform.Find("Stack").GetComponent<Text>().text = text;
-            itemObject.transform.SetParent(parent, true);
-            itemObject.transform.localScale = Vector3.one;
-        }
+
 
         private void RemoveFromList(List<GameObject> viewCardList, GameObject gameObject)
         {
