@@ -20,10 +20,10 @@ namespace Assets.Script
         {
             DontDestroyOnLoad(this);
             Init(ItemInventory,"Item",ItemDatabase,l=> new NewItem(l), "ID", "ItemName", "Type", "Subtype", "Stats", "StatValues", "Chance",
-                "CraftItem", "NumberOfItems", "Quantity", "Profession", "ProfessionLevelNeed", "ProfessionExperiences", "BuyPrice", "SellPrice", "Loot", "MaximumStack");
+                "CraftItem", "NumberOfItems", "Quantity", "Profession", "ProfessionLevelNeed", "ProfessionExperiences", "BuyPrice", "SellPrice", "Loot", "MaximumStack","Rank");
             Init(QuestList,"Quest", QuestDatabase, l => new ModifyQuest(l),"ID", "Name", "Description", "Level", "Experiences", "QuestMasterAsign", "QuestMasterSubmit",
                 "EQuest", "Money", "ItemReward", "ItemRewardQuantity", "ItemToDelivery", "ItemToDeliveryQuantity", "EnemyId", "TotalKills", "QuestMastersID");
-            Init(SpellList,"Spell",SpellDatabase,l=>new Spell(l),"ID","Name","Description","LevelToAccess","GoldToAccess","ManaCost","Range","Cooldown","SpellType","Duration","Skill", "PercentageIncrease", "PercentageDamage");
+            Init(SpellList,"Spell",SpellDatabase,l=>new Spell(l),"ID","Name","Description","LevelToAccess","GoldToAccess","ManaCost","Range","Cooldown","SpellType","Duration","Skill","Vital","DamageStats", "PercentageIncreaseDecrease", "PercentageDamage");
         }
         //ultra hnusná metoda
         private void  Init<T>(TextAsset asset,string firstElem,List<T> staticList, Func<Dictionary<string, string>,T> objNew,params string [] tabs)

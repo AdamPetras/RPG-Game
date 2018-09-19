@@ -1,5 +1,7 @@
 ﻿using System;
 using Assets.Script.CharacterFolder;
+using Assets.Script.InventoryFolder;
+using Assets.Script.QuestFolder;
 using Assets.Script.StatisticsFolder;
 using UnityEngine;
 
@@ -9,14 +11,39 @@ namespace Assets.Script.Enemy
     public struct DropItem
     {
         public int ItemID;
-        public int Quantity;
+        
+        public Quantity Quantity;
         public float Chance;
-
-        public DropItem(int itemID, int quantity, float chance)
+        
+        public DropItem(int itemID, Quantity quantity, float chance)
         {
             ItemID = itemID;
             Quantity = quantity;
             Chance = chance;
+        }
+    }
+    [Serializable]
+    public struct DropMoney
+    {
+        public Quantity Quantity;
+        public float Chance;
+
+        public DropMoney(Quantity quantity, float chance)
+        {
+            Quantity = quantity;
+            Chance = chance;
+        }
+    }
+    [Serializable]
+    public struct Quantity
+    {
+        public int QuantityFrom;
+        public int QuantityTo;
+
+        public Quantity(int quantityFrom, int quantityTo)
+        {
+            QuantityFrom = quantityFrom;
+            QuantityTo = quantityTo;
         }
     }
 
@@ -28,16 +55,20 @@ namespace Assets.Script.Enemy
         public int ExperiencesForKill { get; private set; }
         public string Name { get; set; }
         public bool Angry { get; set; }
+        private int _id;
         private delegate void EnemyDie();
         private event EnemyDie EventEnemyDie;
         private bool done;
+        private bool questAdded;
         private float corpseTimer;
         private bool _dropExist;
-        public readonly DropItem[] _dropList;
+        public readonly DropItem[] DropList;
+        public readonly DropMoney MoneyDrop;
         private readonly int _respawnTime;
         private readonly Transform _enemyTransform;
-        public EnemyCharacter(BoxCollider collider, Transform enemyTransform, DropItem[] dropList, int respawnTime)
+        public EnemyCharacter(int id, BoxCollider collider, Transform enemyTransform, DropItem[] dropList, int respawnTime, DropMoney moneyDrop)
         {
+            _id = id;
             ExperiencesForKill = 40;
             ExpMultiplier = 1.2f;
             MinLevel = 1;
@@ -45,10 +76,15 @@ namespace Assets.Script.Enemy
             _enemyTransform = enemyTransform;
             EventEnemyDie += AddExperiences;
             EventEnemyDie += CorpseVanishTimer;
+            EventEnemyDie = AddQuestProgress;
             EventEnemyDie += AddDrop;
             _dropExist = false;
-            this._dropList = dropList;
+            questAdded = false;
+            done = false;
+            this.DropList = dropList;
             _respawnTime = respawnTime;
+            MoneyDrop = moneyDrop;
+            
         }
 
         public void Update()
@@ -87,23 +123,49 @@ namespace Assets.Script.Enemy
         {
             if (!done)
             {
-                GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>().AddExp(ExperiencesForKill);
+                GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>().AddExp(ExperiencesForKill);               
                 done = true;
             }
         }
 
-        private void CorpseVanishTimer()
+        private void AddQuestProgress()
         {
+            if (questAdded)
+                return;
+            if (GameObject.FindGameObjectWithTag("Player") != null)
+            {
+                foreach (ModifyQuest quest in GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>().QuestList)
+                {
+                    if (quest.EnemyId == _id)
+                    {
+                        Debug.Log("Add");
+                        quest.CurrentKills++;
+                        if (quest.CurrentKills >= quest.TotalKills)
+                        {
+                            quest.EQuestState = EQuestState.Complete;
+                        }
+                        questAdded = true;
+                    }
+                }      
+            }
+        }
+
+        private void CorpseVanishTimer()
+        {         
             corpseTimer += Time.deltaTime;
             if (corpseTimer >= _respawnTime)
             {
-                /*   Drop dr = ComponentDrop.DropList.Find(s => s.DropClickCollider == DropClickCollider);
-                   if(dr!= null)
-                   if (!dr.Opened)
-                   {
-                       ECharacterState = ECharacterState.Delete;
-                       ComponentDrop.DropList.Remove(dr);
-                   }*/
+                Drop dr = _enemyTransform.Find("DropPrefab").GetComponent<Drop>();
+                if(dr != null)
+                if (dr.DropItemList.Count == 0)
+                {
+                    if (!Drop.Visible || (Drop.Visible && corpseTimer >= 2 * _respawnTime))
+                    {
+                        dr.DropItemList.Clear();
+                        GameObject.Destroy(dr);
+                        ECharacterState = ECharacterState.Delete;                       
+                    }
+                }
             }
         }
 

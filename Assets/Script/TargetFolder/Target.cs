@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Assets.Script.CharacterFolder;
 using Assets.Script.CombatFolder;
 using Assets.Script.Enemy;
@@ -29,24 +31,31 @@ namespace Assets.Script.TargetFolder
         private const float targetTreshold = 0.15f;
         private float targetTimer;
         public bool IsPlayer;
+        private enum Bars
+        {
+            Health,
+            Mana,
+            Energy
+        }
 
         private void Awake()
-        {
-            TargetPrefab = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/TargetPrefab"), transform);
-            TargetPrefab.name = "TargetPrefab";
-            LevelPrefab = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/LevelPrefab"),
-                TargetPrefab.transform);
-            _background = TargetPrefab.transform.Find("Background");
-            if (!IsPlayer)
+        {      
+            if (IsPlayer)
             {
-                _background.position = new Vector3(350, -40);
-                LevelPrefab.transform.position = new Vector3(440, -70);
+                TargetPrefab = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/PlayerTargetPrefab"),
+                    transform);
+                TargetPrefab.name = "PlayerTargetPrefab";
+                _background = TargetPrefab.transform.Find("Background");
+                LevelPrefab = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/LevelPrefab"), TargetPrefab.transform);
+                LevelPrefab.GetComponent<RectTransform>().anchoredPosition = new Vector2(260, -80);
+                InvokeRepeating("TargetSelect", 0, 0.2f);
             }
             else
             {
-                _background.position = new Vector3(50, 15);
-                LevelPrefab.transform.position = new Vector3(140, -20);
-                InvokeRepeating("TargetSelect", 0, 0.2f);
+                TargetPrefab = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/TargetPrefab"), transform);
+                TargetPrefab.name = "TargetPrefab";
+                _background = TargetPrefab.transform.Find("Background");
+                LevelPrefab = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/LevelPrefab"), TargetPrefab.transform);
             }
         }
 
@@ -56,8 +65,7 @@ namespace Assets.Script.TargetFolder
         }
 
         private void Update()
-        {
-
+        {         
             if (IsPlayer)
                 return;
             if ((Input.GetMouseButton(0) || Input.GetMouseButton(1)) && !EventSystem.current.IsPointerOverGameObject())
@@ -66,23 +74,17 @@ namespace Assets.Script.TargetFolder
             }
             if (Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject())
             {
-                if (Utilities.IsFirstRayCastHit(transform) && targetTimer < targetTreshold)
+                //if (targetTimer < targetTreshold)
                 {
-                    if (PlayerAttack.Interact == gameObject)
-                        PlayerAttack.Interact = null;
-                    InvokeRepeating("TargetSelect", 0, 0.2f);
-                    gameObject.transform.Find("Projector").GetComponent<Projector>().enabled = true;
-                }
-                else if (targetTimer < targetTreshold)
-                {
-                    if (PlayerAttack.Interact == gameObject)
-                        PlayerAttack.Interact = null;
-                    CancelInvoke("TargetSelect");
-                    TargetPrefab.GetComponent<Canvas>().enabled = false;
-                    transform.Find("Projector").GetComponent<Projector>().enabled = false;
-                    transform.Find("Name").GetComponent<MeshRenderer>().enabled = false;
+                    StopTarget();
                     transform.Find("Projector").GetComponent<Projector>().material.color = Color.green;
                 }
+                if (Utilities.IsFirstRayCastHit(transform)/* && targetTimer < targetTreshold*/)
+                {
+                    if (PlayerAttack.Interact == gameObject)
+                        PlayerAttack.Interact = null;
+                    StartTarget();
+                }             
                 targetTimer = 0;
             }
             else if (Input.GetMouseButtonUp(1) && !EventSystem.current.IsPointerOverGameObject())
@@ -90,21 +92,38 @@ namespace Assets.Script.TargetFolder
                 if (Utilities.IsFirstRayCastHit(transform) && targetTimer < targetTreshold)
                 {
                     PlayerAttack.Interact = gameObject;
-                    gameObject.transform.Find("Projector").GetComponent<Projector>().enabled = true;
+                    StartTarget();
                     gameObject.transform.Find("Projector").GetComponent<Projector>().material.color = Color.red;
-                    InvokeRepeating("TargetSelect", 0, 0.2f);
+                   
                 }
                 else if (targetTimer < targetTreshold)
                 {
-                    if (PlayerAttack.Interact == gameObject)
-                        PlayerAttack.Interact = null;
-                    CancelInvoke("TargetSelect");
-                    TargetPrefab.GetComponent<Canvas>().enabled = false;
-                    transform.Find("Projector").GetComponent<Projector>().enabled = false;
-                    transform.Find("Name").GetComponent<MeshRenderer>().enabled = false;
+                    StopTarget();
                 }
                 targetTimer = 0;
             }
+        }
+
+        private void StartTarget()
+        {
+            gameObject.transform.Find("Projector").GetComponent<Projector>().enabled = true;
+            InvokeRepeating("TargetSelect", 0, 0.2f);
+        }
+
+        private void StopTarget()
+        {
+            if (PlayerAttack.Interact == gameObject)
+                PlayerAttack.Interact = null;
+            CancelInvoke("TargetSelect");
+            TargetPrefab.GetComponent<Canvas>().enabled = false;
+            if (!IsPlayer)
+            {
+                if (GetComponent<EnemyStatistics>() != null)
+                    if (GetComponent<EnemyStatistics>().EnemyCharacter.BuffObj != null)
+                        Destroy(GetComponent<EnemyStatistics>().EnemyCharacter.BuffObj);
+            }
+            transform.Find("Projector").GetComponent<Projector>().enabled = false;
+            transform.Find("Name").GetComponent<MeshRenderer>().enabled = false;
         }
 
         public void TargetSelect()
@@ -113,9 +132,11 @@ namespace Assets.Script.TargetFolder
             {
                 PlayerComponent playerComponent = gameObject.GetComponent<PlayerComponent>();
                 OnChangeBarSize(playerComponent.character.GetVital((int)EVital.Health).CurrentValue,
-                    playerComponent.character.GetVital((int)EVital.Health).MaxValue, true);
+                    playerComponent.character.GetVital((int)EVital.Health).MaxValue, Bars.Health);
                 OnChangeBarSize(playerComponent.character.GetVital((int)EVital.Mana).CurrentValue,
-                    playerComponent.character.GetVital((int)EVital.Mana).MaxValue, false);
+                    playerComponent.character.GetVital((int)EVital.Mana).MaxValue, Bars.Mana);            
+                OnChangeBarSize(playerComponent.character.GetVital((int)EVital.Energy).CurrentValue,
+                    playerComponent.character.GetVital((int)EVital.Energy).MaxValue, Bars.Energy);
                 LevelPrefab.transform.Find("Text").GetComponent<Text>().text = playerComponent.Level.ToString();
             }
             else
@@ -126,23 +147,30 @@ namespace Assets.Script.TargetFolder
                 {
                     EnemyStatistics stats = GetComponent<EnemyStatistics>();
                     OnChangeBarSize(stats.EnemyCharacter.GetVital((int)EVital.Health).CurrentValue,
-                        stats.EnemyCharacter.GetVital((int)EVital.Health).MaxValue, true);
+                        stats.EnemyCharacter.GetVital((int)EVital.Health).MaxValue, Bars.Health);
                     OnChangeBarSize(stats.EnemyCharacter.GetVital((int)EVital.Mana).CurrentValue,
-                        stats.EnemyCharacter.GetVital((int)EVital.Mana).MaxValue, false);
+                        stats.EnemyCharacter.GetVital((int)EVital.Mana).MaxValue, Bars.Mana);
                     LevelPrefab.transform.Find("Text").GetComponent<Text>().text = stats.Level.ToString();
+                    if (stats.EnemyCharacter.BuffObj == null)
+                    {
+                        stats.EnemyCharacter.BuffObj =
+                            GameObject.Instantiate(Resources.Load<GameObject>("Prefab/EnemyBuffPanel"));
+                        stats.EnemyCharacter.BuffObj.name = "EnemyBuffPanel";
+                        stats.EnemyCharacter.BuffPanel = stats.EnemyCharacter.BuffObj.transform.Find("Background");
+                    }
                 }
                 else if (target == ETarget.QuestMaster)
                 {
                     QuestMasterObject stats = GetComponent<QuestMasterObject>();
-                    OnChangeBarSize(stats.Health, stats.Health, true);
-                    OnChangeBarSize(stats.Mana, stats.Mana, false);
+                    OnChangeBarSize(stats.Health, stats.Health, Bars.Health);
+                    OnChangeBarSize(stats.Mana, stats.Mana, Bars.Mana);
                     LevelPrefab.transform.Find("Text").GetComponent<Text>().text = stats.Level.ToString();
                 }
                 else if (target == ETarget.SalesMan)
                 {
                     ComponentSalesMan stats = GetComponent<ComponentSalesMan>();
-                    OnChangeBarSize(stats.Health, stats.Health, true);
-                    OnChangeBarSize(stats.Mana, stats.Mana, false);
+                    OnChangeBarSize(stats.Health, stats.Health, Bars.Health);
+                    OnChangeBarSize(stats.Mana, stats.Mana, Bars.Mana);
                     LevelPrefab.transform.Find("Text").GetComponent<Text>().text = stats.Level.ToString();
                 }
                 transform.Find("Name").GetComponent<MeshRenderer>().enabled = true;
@@ -153,16 +181,20 @@ namespace Assets.Script.TargetFolder
             }
         }
 
-        private void OnChangeBarSize(float currSize, float maxSize, bool isHealth)
+        private void OnChangeBarSize(float currSize, float maxSize, Bars eBar)
         {
 
-            if (isHealth)
+            if (eBar == Bars.Health)
             {
                 SelectBar(currSize, maxSize, "Health");
             }
-            else
+            else if(eBar == Bars.Mana)
             {
                 SelectBar(currSize, maxSize, "Mana");
+            }
+            else if (eBar == Bars.Energy)
+            {
+                SelectBar(currSize, maxSize, "Energy");
             }
         }
 

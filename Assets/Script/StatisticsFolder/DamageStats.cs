@@ -12,7 +12,8 @@ namespace Assets.Script.StatisticsFolder
         RangedPower,
         CriticalChance,
         DamageBlock,
-        HealthRegen
+        HealthRegen,
+        None
     }
     [Serializable]
     public class DamageStats : SkillSettings

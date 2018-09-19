@@ -1,15 +1,66 @@
 fileFormatVersion: 2
-guid: d7eed08d358faad41a278c779fec667b
-timeCreated: 1477481378
+guid: e91cebc445b512147839bedbbfeba584
+timeCreated: 1510562375
 licenseType: Free
 ModelImporter:
   serializedVersion: 19
   fileIDToRecycleName:
-    100000: //RootNode
-    400000: //RootNode
-    2300000: //RootNode
-    3300000: //RootNode
-    4300000: humanBody
+    100000: Body
+    100002: Chest
+    100004: Elbow_left
+    100006: Elbow_right
+    100008: Foot_left
+    100010: Foot_right
+    100012: Hand_left
+    100014: Hand_right
+    100016: Head
+    100018: Heel_left
+    100020: Heel_right
+    100022: //RootNode
+    100024: humanBody-reduced
+    100026: humanBody-reduced_MeshPart0
+    100028: humanBody-reduced_MeshPart1
+    100030: Knee_left
+    100032: Knee_right
+    100034: Leg_left
+    100036: Leg_right
+    100038: Neck
+    100040: Shoulder_left
+    100042: Shoulder_right
+    100044: Skeleton
+    100046: Wrist_left
+    100048: Wrist_right
+    400000: Body
+    400002: Chest
+    400004: Elbow_left
+    400006: Elbow_right
+    400008: Foot_left
+    400010: Foot_right
+    400012: Hand_left
+    400014: Hand_right
+    400016: Head
+    400018: Heel_left
+    400020: Heel_right
+    400022: //RootNode
+    400024: humanBody-reduced
+    400026: humanBody-reduced_MeshPart0
+    400028: humanBody-reduced_MeshPart1
+    400030: Knee_left
+    400032: Knee_right
+    400034: Leg_left
+    400036: Leg_right
+    400038: Neck
+    400040: Shoulder_left
+    400042: Shoulder_right
+    400044: Skeleton
+    400046: Wrist_left
+    400048: Wrist_right
+    4300000: humanBody-reduced_MeshPart0
+    4300002: humanBody-reduced_MeshPart1
+    7400000: Take 001
+    9500000: //RootNode
+    13700000: humanBody-reduced_MeshPart0
+    13700002: humanBody-reduced_MeshPart1
   materials:
     importMaterials: 1
     materialName: 0
@@ -20,6 +71,8 @@ ModelImporter:
     resampleCurves: 1
     optimizeGameObjects: 0
     motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -30,7 +83,85 @@ ModelImporter:
     animationScaleError: 0.5
     animationWrapMode: 0
     extraExposedTransformPaths: []
-    clipAnimations: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: Take 001
+      takeName: Take 001
+      firstFrame: 1
+      lastFrame: 20
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: humanBody-reduced
+        weight: 1
+      - path: humanBody-reduced/humanBody-reduced_MeshPart0
+        weight: 1
+      - path: humanBody-reduced/humanBody-reduced_MeshPart1
+        weight: 1
+      - path: Skeleton
+        weight: 1
+      - path: Skeleton/Body
+        weight: 1
+      - path: Skeleton/Body/Chest
+        weight: 1
+      - path: Skeleton/Body/Chest/Hand_left
+        weight: 1
+      - path: Skeleton/Body/Chest/Hand_left/Shoulder_left
+        weight: 1
+      - path: Skeleton/Body/Chest/Hand_left/Shoulder_left/Elbow_left
+        weight: 1
+      - path: Skeleton/Body/Chest/Hand_left/Shoulder_left/Elbow_left/Wrist_left
+        weight: 1
+      - path: Skeleton/Body/Chest/Hand_right
+        weight: 1
+      - path: Skeleton/Body/Chest/Hand_right/Shoulder_right
+        weight: 1
+      - path: Skeleton/Body/Chest/Hand_right/Shoulder_right/Elbow_right
+        weight: 1
+      - path: Skeleton/Body/Chest/Hand_right/Shoulder_right/Elbow_right/Wrist_right
+        weight: 1
+      - path: Skeleton/Body/Chest/Neck
+        weight: 1
+      - path: Skeleton/Body/Chest/Neck/Head
+        weight: 1
+      - path: Skeleton/Leg_left
+        weight: 1
+      - path: Skeleton/Leg_left/Knee_left
+        weight: 1
+      - path: Skeleton/Leg_left/Knee_left/Heel_left
+        weight: 1
+      - path: Skeleton/Leg_left/Knee_left/Heel_left/Foot_left
+        weight: 1
+      - path: Skeleton/Leg_right
+        weight: 1
+      - path: Skeleton/Leg_right/Knee_right
+        weight: 1
+      - path: Skeleton/Leg_right/Knee_right/Heel_right
+        weight: 1
+      - path: Skeleton/Leg_right/Knee_right/Heel_right/Foot_right
+        weight: 1
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
     isReadable: 1
   meshes:
     lODScreenPercentages: []
@@ -56,6 +187,7 @@ ModelImporter:
   importAnimation: 1
   copyAvatar: 0
   humanDescription:
+    serializedVersion: 2
     human: []
     skeleton: []
     armTwist: 0.5
@@ -66,9 +198,12 @@ ModelImporter:
     legStretch: 0.05
     feetSpacing: 0
     rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
     hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
-  animationType: 0
+  animationType: 2
   humanoidOversampling: 1
   additionalBone: 0
   userData: 

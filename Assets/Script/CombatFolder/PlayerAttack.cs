@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using Assets.Script.CharacterFolder;
 using Assets.Script.Enemy;
 using Assets.Script.HUD;
 using Assets.Script.StatisticsFolder;
 using Assets.Script.TargetFolder;
 using UnityEngine;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 namespace Assets.Script.CombatFolder
@@ -12,23 +14,16 @@ namespace Assets.Script.CombatFolder
     public class PlayerAttack : Attack
     {
         private Transform _enemyTransformBefore;
-        private DamageHud _damageHud;
         public static GameObject Interact;
         private bool _isCrit;
         public PlayerAttack(Transform transform)
         {
             PlayerComponent = transform.GetComponent<PlayerComponent>();
-            _damageHud = new DamageHud(Color.white, 30, true);
             PlayerTransform = transform;
             EnemyTransform = null;
+            Interact = null;
             _isCrit = false;
         }
-
-       /* public void OnGUI()
-        {
-            if (DamageDone != 0)
-                _damageHud.OnGUI(DamageDone, _isCrit);
-        }*/
 
         protected override void LetsAttack()
         {
@@ -46,7 +41,7 @@ namespace Assets.Script.CombatFolder
                 if (EnemyStatistics.EnemyCharacter.ECharacterState == ECharacterState.Alive)    //pokud je živý
                 {
                     EnemyStatistics.EnemyCharacter.Angry = true;    //nastavení enemy angry
-                    float damage = PlayerComponent.character.GetDamageStats((int)EDamageStats.SwordDamage).CurrentValue;      //nastavení damagu
+                    float damage = PlayerComponent.character.GetDamageStats((int)PlayerComponent.SelectWhichWeapon()).CurrentValue;      //nastavení damagu
                     float block = EnemyStatistics.EnemyCharacter.GetDamageStats((int)EDamageStats.DamageBlock).CurrentValue;    //nastavení bloku
                     if (Random.Range(0, 100) <=
                         PlayerComponent.character.GetDamageStats((int)EDamageStats.CriticalChance).CurrentValue)
@@ -59,7 +54,8 @@ namespace Assets.Script.CombatFolder
                         DamageDone = damage + DamageOscilation(damage) - block;        //výsledný útok
                         _isCrit = false;
                     }
-                    EnemyStatistics.EnemyCharacter.DamageDone(DamageDone, false);   //odečtení od vitalu                    
+                    EnemyStatistics.EnemyCharacter.DamageDone(DamageDone, false);   //odečtení od vitalu     
+                    DamageHud.Hit(true,DamageDone);
                     if (EnemyStatistics.EnemyCharacter.GetVital((int)EVital.Health).CurrentValue <= 1) //pokud má méně životu mež 0 nebo 0 životů tak nastavení enumu
                     {
                         EnemyStatistics.EnemyCharacter.ECharacterState = ECharacterState.Dead;

@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.Remoting.Messaging;
 using Assets.Script.CharacterFolder;
+using Assets.Script.SpellFolder;
 using UnityEngine;
 
 namespace Assets.Script.StatisticsFolder
@@ -35,19 +38,23 @@ namespace Assets.Script.StatisticsFolder
         public Skill[] skillArray;
         public DamageStats[] damageStatsArray;
         public Vital[] vitalArray;
+        public List<Spell> SpellList;
         public ECharacter ECharacter { get; set; }
         public ECharacterState ECharacterState { get; set; }
         public ECombatState ECombatState { get; set; }
         private float hpRegenTrashold = 1f;
         private float timer;
+        public GameObject BuffObj;
+        public Transform BuffPanel;
         public Character()
         {
+            SpellList = new List<Spell>();
             skillArray = new Skill[Enum.GetValues(typeof(ESkill)).Length];
             damageStatsArray = new DamageStats[Enum.GetValues(typeof(EDamageStats)).Length];
             vitalArray = new Vital[Enum.GetValues(typeof(EVital)).Length];
             ECharacter = ECharacter.Human;
             ECharacterState = ECharacterState.Alive;
-            ECombatState = ECombatState.NoneCombat;
+            ECombatState = ECombatState.NoneCombat;            
             LoadSkill();
             LoadVitalStats();
             LoadDamageStats();
@@ -58,6 +65,12 @@ namespace Assets.Script.StatisticsFolder
             if ((ECombatState == ECombatState.AFK || ECombatState == ECombatState.NoneCombat) &&
                 ECharacterState == ECharacterState.Alive)
             {
+                if (GetVital((int) EVital.Health).CurrentValue <= 0)
+                {
+                    GetVital((int) EVital.Health).CurrentValue = 0;
+                    ECharacterState = ECharacterState.Dead;
+                    return;
+                }
                 if (GetVital((int)EVital.Health).CurrentValue < GetVital((int)EVital.Health).MaxValue ||
                     GetVital((int)EVital.Mana).CurrentValue < GetVital((int)EVital.Mana).MaxValue)
                 {
@@ -149,7 +162,7 @@ namespace Assets.Script.StatisticsFolder
             ModifySkill def = new ModifySkill(GetSkill((int)ESkill.Defence), 0.1f);
             GetDamageStats((int)EDamageStats.DamageBlock).AddSkill(def);
             //mace damage
-            ModifySkill mace = new ModifySkill(GetSkill((int)ESkill.Strenght), 1);
+            ModifySkill mace = new ModifySkill(GetSkill((int)ESkill.Strenght), 1f);
             GetDamageStats((int)EDamageStats.MaceDamage).AddSkill(mace);
             //axe damage
             ModifySkill axe = new ModifySkill(GetSkill((int)ESkill.Attack), GetSkill((int)ESkill.Strenght), 0.6f, 0.6f);
@@ -177,6 +190,9 @@ namespace Assets.Script.StatisticsFolder
             //mana
             ModifySkill mana = new ModifySkill(GetSkill((int)ESkill.Intelect), 10);
             GetVital((int)EVital.Mana).AddSkill(mana);
+            //energy
+            ModifySkill energy = new ModifySkill(100);
+            GetVital((int)EVital.Energy).AddSkill(energy);
         }
 
         public void UpdateStats()

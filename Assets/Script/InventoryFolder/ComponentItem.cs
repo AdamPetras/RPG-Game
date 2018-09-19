@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
+using Assets.Script.Extension;
 using Assets.Scripts.InventoryFolder;
 using Assets.Scripts.InventoryFolder.CraftFolder;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Assets.Script.InventoryFolder
 {
@@ -10,6 +13,7 @@ namespace Assets.Script.InventoryFolder
         None,
         Inventory,
         Drop,
+        Shop,
         Armor   
     }
 
@@ -21,6 +25,7 @@ namespace Assets.Script.InventoryFolder
         public EType Type { get; set; }
         public ESubtype Subtype { get; set; }
         public EProfession EProfession { get; set; }
+        public ERank ERank { get; set; }
         public List<ItemStats> ItemStats { get; set; }
         public int Chance { get; set; }
         public List<CraftItem> CraftItems { get; set; }
@@ -38,11 +43,20 @@ namespace Assets.Script.InventoryFolder
         {
 
         }
-
-
-       /* public static NewItem ComponentItemToNewItem(int id)
+        /*public void OnDrop(PointerEventData eventData)
         {
-            return new NewItem(NewItem.IdToItem(id));
+            if (InventoryMouseHandler.itemBeingDragged == null)
+                return;
+            InventoryMouseHandler.itemBeingDragged.transform.SetParent(InventoryMouseHandler.startParent);
+            if (InventoryMouseHandler.itemBeingDragged.GetComponent<ComponentItem>().EItemState == EItemState.Armor)
+            {
+                InventoryMouseHandler.startParent.GetComponent<ArmorSlot>().Occupied = true;
+            }
         }*/
+
+        /* public static NewItem ComponentItemToNewItem(int id)
+         {
+             return new NewItem(NewItem.IdToItem(id));
+         }*/
     }
 }

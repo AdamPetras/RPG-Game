@@ -6,7 +6,9 @@ namespace Assets.Script.StatisticsFolder
     public enum EVital
     {
         Health,
-        Mana
+        Mana,
+        Energy,
+        None
     }
     [Serializable]
     public class Vital : SkillSettings

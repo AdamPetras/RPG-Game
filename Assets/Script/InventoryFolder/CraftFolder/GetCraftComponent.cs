@@ -26,6 +26,11 @@ namespace Assets.Scripts.InventoryFolder.CraftFolder
             return GetMainPanel().transform.Find("ScrollView");
         }
 
+        public Transform GetExitKey()
+        {
+            return GetMainPanel().transform.Find("Exit");
+        }
+
         public Transform GetButtonPanel()
         {
             return GetMainPanel().transform.Find("ButtonPanel");
@@ -39,6 +44,15 @@ namespace Assets.Scripts.InventoryFolder.CraftFolder
         public Transform GetCraftNeedPanel()
         {
             return GetInfoPanel().transform.Find("NeedPanel");
+        }
+
+        public Transform GetCraftItemName()
+        {
+            return GetInfoPanel().transform.Find("ItemName");
+        }
+        public Transform GetCraftItemInfo()
+        {
+            return GetInfoPanel().transform.Find("ItemInfo");
         }
 
         public Transform GetTextNeedLevel()

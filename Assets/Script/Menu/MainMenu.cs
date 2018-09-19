@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
 using Assets.Script.HUD;
+using Assets.Script.Interaction;
 using Assets.Script.InventoryFolder;
 using Assets.Script.QuestFolder;
 using Assets.Scripts.InventoryFolder;
@@ -28,6 +29,7 @@ namespace Assets.Script.Menu
     {
         public static bool Visible;
         public static bool Enabled;
+        public bool CouldBeExited;
         public bool IsMainMenu;
         private bool isExitDialogVisible;
         public GameObject gameSettings;
@@ -50,6 +52,7 @@ namespace Assets.Script.Menu
             _backToMenuTransform = _backgroundTransform.Find("BackToMainMenu");
             _resumeTransform = _backgroundTransform.Find("Resume");
             _quitGameTransform = _backgroundTransform.Find("QuitGame");
+            CouldBeExited = true;
         }
 
         // Use this for initialization
@@ -79,7 +82,6 @@ namespace Assets.Script.Menu
             _loadTransform.GetComponent<Button>().onClick.AddListener(OnLoad);
             _settingTransform.GetComponent<Button>().onClick.AddListener(OnSettings);
             _quitGameTransform.GetComponent<Button>().onClick.AddListener(OnQuit);
-            Utilities.ListOfAllObjects.Add(gameObject);
             Enabled = true;
         }
 
@@ -91,13 +93,25 @@ namespace Assets.Script.Menu
             if (!IsMainMenu)
                 if (Input.GetKeyUp(KeyCode.Escape) && !Visible)
                 {
-                    _backgroundTransform.gameObject.SetActive(true);
-                    Visible = true;
+                    if(!MainPanel.IsAnyWindowOpen())
+                        OnVisible();
+                    else
+                        MainPanel.CloseAllWindows();
                 }
                 else if (Input.GetKeyUp(KeyCode.Escape) && Visible)
                 {
                     OnResume();
                 }
+        }
+
+        public void OnVisible()
+        {
+            if (BlackScreen.Visible || InGameTime.Visible)
+                return;
+            transform.SetAsLastSibling();
+            MainPanel.OpenWindow(name);
+            _backgroundTransform.gameObject.SetActive(true);
+            Visible = true;
         }
 
         private void OnNewGame()
@@ -125,10 +139,11 @@ namespace Assets.Script.Menu
 
         }
 
-        private void OnResume()
+        public void OnResume()
         {
-            if (Enabled)
+            if (Enabled && CouldBeExited)
             {
+                MainPanel.CloseWindow(name);
                 _backgroundTransform.gameObject.SetActive(false);
                 Visible = false;
             }
@@ -174,6 +189,7 @@ namespace Assets.Script.Menu
                 _dialog = Instantiate(Resources.Load<GameObject>("Prefab/DialogWindow"));
                 Enabled = false;
                 InitDialog(OnDialogMenuYes, "Do you really want to go to main menu?");
+                Utilities.ClearStaticCaches();
             }
         }
 

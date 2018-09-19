@@ -92,6 +92,7 @@ namespace Assets.Script.QuestFolder
 
         public void OnExit()
         {
+            MainPanel.CloseWindow("QuestWindow");
             EQuestMasterState = EQuestMasterState.Choise;
             _applyButton.gameObject.SetActive(false);
             _exitButton.Find("Text").GetComponent<Text>().text = "Exit";
@@ -117,15 +118,15 @@ namespace Assets.Script.QuestFolder
                     OnCheckQuest(_selectedQuest);
                 if (_selectedQuest.EQuestState == EQuestState.Complete &&
                     _applyButton.Find("Text").GetComponent<Text>().text == "Complete")
-                {                   
+                {
                     if (_selectedQuest.ItemReward.Count > 0)
                     {
                         if (!SlotManagement.IsInventoryFull())
                             OnSubmitQuest(_selectedQuest);
                         else
                         {
-                            Debug.LogWarning("#004 Inventory is full [QuestMaster]");
-                            MyDebug.LogWarning("#004 Inventory is full [QuestMaster]");
+                            Debug.LogWarning("#004 Inventory is full [ThisQuestMaster]");
+                            MyDebug.LogWarning("#004 Inventory is full [ThisQuestMaster]");
                         }
                     }
                 }
@@ -155,14 +156,10 @@ namespace Assets.Script.QuestFolder
                     if (!IdToQuestMaster(id).QuestList.Contains(quest))
                         IdToQuestMaster(id).QuestList.Add(quest);
                 }
-            else if (quest.EQuest == EQuest.Delivery)
+            else if (quest.EQuest == EQuest.Delivery || quest.EQuest == EQuest.Kill)
             {
                 if (!IdToQuestMaster(quest.QuestMasterSubmit).QuestList.Contains(quest))
                     IdToQuestMaster(quest.QuestMasterSubmit).QuestList.Add(quest);
-            }
-            else if (quest.EQuest == EQuest.Kill)
-            {
-
             }
         }
 
@@ -192,7 +189,7 @@ namespace Assets.Script.QuestFolder
 
         private void QuestCompleteAdd(ModifyQuest quest)
         {
-            Debug.Log("add");
+            //Debug.Log("add");
             if (!IdToQuestMaster(quest.QuestMasterSubmit).QuestList.Contains(quest))
                 IdToQuestMaster(quest.QuestMasterSubmit).QuestList.Add(quest);
         }
@@ -222,7 +219,8 @@ namespace Assets.Script.QuestFolder
                 QuestMasterObject.Visible = true;
                 if (!_instantiate)
                 {
-                    _questList = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/QuestListPrefab"), GameObject.Find(Name).transform);
+                    MainPanel.OpenWindow("QuestWindow");
+                    _questList = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/QuestListPrefab"), GameObject.Find("Graphics").transform);
                     _questList.name = "QuestListPrefab";
                     CanvasInstantiate();
                     _instantiate = true;
@@ -291,10 +289,10 @@ namespace Assets.Script.QuestFolder
                 moneyExpPanel.SetAsLastSibling();
                 moneyExpPanel.Find("TextMoney").GetComponent<Text>().text = quest.MoneyReward.ToString();
                 moneyExpPanel.Find("TextExperiences").GetComponent<Text>().text = quest.Experiences.ToString();
-                Canvas.ForceUpdateCanvases();
+                Canvas.ForceUpdateCanvases();              
                 _exitButton.Find("Text").GetComponent<Text>().text = "Back";
-                _exitButton.GetComponent<Button>().onClick.AddListener(OnBack);
-                _applyButton.gameObject.SetActive(true);
+                _exitButton.GetComponent<Button>().onClick.RemoveAllListeners();
+                _exitButton.GetComponent<Button>().onClick.AddListener(OnBack);          
             }
         }
 
@@ -327,6 +325,7 @@ namespace Assets.Script.QuestFolder
                     }
                     break;
                 case EQuest.Kill:
+                    tmp += "kill "+quest.CurrentKills+"/"+quest.TotalKills+" "+quest.EnemyId;
                     break;
             }
             return tmp;
@@ -336,11 +335,13 @@ namespace Assets.Script.QuestFolder
         {
             if (quest.EQuestState == EQuestState.None)
             {
+                _applyButton.gameObject.SetActive(true);
                 _applyButtonText.text = "Accept";
                 //ACCEPT
             }
             else if (quest.EQuestState == EQuestState.Complete)
             {
+                _applyButton.gameObject.SetActive(true);
                 _applyButtonText.text = "Complete";
                 //complete
             }
@@ -349,12 +350,19 @@ namespace Assets.Script.QuestFolder
                 if (quest.EQuest == EQuest.Talk)
                 {
                     _applyButtonText.text = "Talk";
+                    _applyButton.gameObject.SetActive(true);
                     //talk
                 }
                 else if (quest.EQuest == EQuest.Delivery)
                 {
                     _applyButtonText.text = "Delivery";
+                    _applyButton.gameObject.SetActive(true);
                     //delivery
+                }
+                else if (quest.EQuest == EQuest.Kill)
+                {
+                    _applyButtonText.text = "";
+                    //kill
                 }
             }
         }
@@ -376,7 +384,7 @@ namespace Assets.Script.QuestFolder
 
         public static QuestMaster IdToQuestMaster(int id)
         {
-            return GameObject.FindGameObjectsWithTag("QuestMaster").First(s=>s.name == QuestMasterGenerate.QuestMasterList.Find(l => l.Id == id).Name).GetComponent<QuestMasterObject>().QuestMaster;
+            return QuestMasterGenerate.QuestMasterList.Find(s => s.Id == id).ThisQuestMaster;
         }
 
     }

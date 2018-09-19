@@ -1,18 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
 using Assets.Script.HUD;
+using Assets.Script.Interaction;
+using Assets.Script.Menu;
 using Assets.Script.QuestFolder;
 using Assets.Scripts.InventoryFolder;
 using Assets.Scripts.InventoryFolder.CraftFolder;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Assets.Script.InventoryFolder.CraftFolder
 {
-
     public class CraftSettings
     {
         private GetCraftComponent _getCraftComponent;
@@ -27,6 +30,11 @@ namespace Assets.Script.InventoryFolder.CraftFolder
         private const int XSIZE = 500;
         private const int YSIZE = 400;
         private PlayerComponent _playerComponent;
+        private static GameObject _itemInfo;
+        private static Transform _infoBackground;
+        private static Text _infoName;
+        private static Text _infoDescription;
+
         public CraftSettings(GameObject mainObj)
         {
             _craftObject = mainObj;
@@ -44,9 +52,11 @@ namespace Assets.Script.InventoryFolder.CraftFolder
             _getCraftComponent.GetTailoringToggle().onValueChanged.AddListener(ChoiseTailoring);
             _defaultCardList = Database.ItemDatabase.Where(s => s.EProfession != EProfession.None && s.EProfession != EProfession.Fishing).ToList();
             _craftObject.GetComponent<Canvas>().enabled = true;
-            Utilities.ListOfAllObjects.Add(_craftObject);
             _craftObject.SetActive(false);
             Utilities.DisableOrEnableAll(_craftObject);
+            _getCraftComponent.GetExitKey().GetComponent<Button>().onClick.AddListener(OnHide);
+            if (_itemInfo == null)
+                InfoInstantiate();
         }
 
         private void SetCraftMenuSize()
@@ -57,6 +67,27 @@ namespace Assets.Script.InventoryFolder.CraftFolder
                     _getCraftComponent.GetMainPanel().GetComponent<RectTransform>().rect.height / 2);
         }
 
+        public void OnVisible()
+        {
+            if (MainMenu.Visible || InGameTime.Visible)
+                return;
+            _craftObject.transform.SetAsLastSibling();
+            MainPanel.OpenWindow(_craftObject.name);
+            _craftObject.SetActive(true);
+            Utilities.DisableOrEnableAll(_craftObject, true);
+            ComponentCraftMenu.Visible = true;
+        }
+
+        public void OnHide()
+        {
+            if (MainMenu.Visible || InGameTime.Visible)
+                return;
+            MainPanel.CloseWindow(_craftObject.name);
+            ComponentCraftMenu.Visible = false;
+            Utilities.DisableOrEnableAll(_craftObject);
+            _craftObject.SetActive(false);
+        }
+
         public void Update()
         {
             if (_playerComponent == null)
@@ -65,23 +96,11 @@ namespace Assets.Script.InventoryFolder.CraftFolder
             }
             if (Input.GetKeyUp(KeyCode.P) && !ComponentCraftMenu.Visible)
             {
-
-                _craftObject.SetActive(true);
-                Utilities.DisableOrEnableAll(_craftObject, true);
-                ComponentCraftMenu.Visible = true;
+                OnVisible();
             }
             else if (Input.GetKeyUp(KeyCode.P) && ComponentCraftMenu.Visible)
             {
-                Debug.Log("showw");
-                ComponentCraftMenu.Visible = false;
-                Utilities.DisableOrEnableAll(_craftObject);
-                _craftObject.SetActive(false);
-            }
-            if (Input.GetKeyUp(KeyCode.Escape) && ComponentCraftMenu.Visible)
-            {
-                ComponentCraftMenu.Visible = false;
-                Utilities.DisableOrEnableAll(_craftObject);
-                _craftObject.SetActive(false);
+                OnHide();
             }
             if (ComponentCraftMenu.Visible)
             {
@@ -102,6 +121,20 @@ namespace Assets.Script.InventoryFolder.CraftFolder
                 LoadScrollView(_cardList);
             }
         }
+
+        private void InfoInstantiate()
+        {
+            _itemInfo = GameObject.Find("SlotItemInfo");
+            if (_itemInfo == null)
+            {
+                _itemInfo = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/Info"));
+            }
+            _infoBackground = _itemInfo.transform.Find("Background");
+            _infoName = _infoBackground.Find("Name").GetComponent<Text>();
+            _infoDescription = _infoBackground.Find("Desc").GetComponent<Text>();
+            _itemInfo.GetComponent<Canvas>().enabled = false;
+        }
+
         private void LoadScrollView(List<NewItem> cardList)
         {
             //načtení itemů z listu
@@ -114,7 +147,10 @@ namespace Assets.Script.InventoryFolder.CraftFolder
                     card.Instantiate = true;    //nastavení že byl instanciován                  
                     card.CraftingObject = cardObject;  //uložení objektu pro případné odstranění(úpravu)
                     if (card.Icon != null)  //pokud je nějaká ikona
-                        cardObject.transform.Find("Image").GetComponent<Image>().sprite = card.Icon;    //uložení ikony do proměnné
+                        NewItem.SetStats(cardObject.transform.Find("Item").gameObject, card);    //nastavení statů komponenty
+                    cardObject.transform.Find("Item").gameObject.AddComponent<Button>().onClick.AddListener(delegate { OnClick(int.Parse(cardObject.name)); });
+                    cardObject.transform.Find("Item").GetComponent<InventoryMouseHandler>().CanIMove = false;
+                    cardObject.transform.Find("Item").GetComponent<Image>().sprite = card.Icon;
                     cardObject.transform.Find("Name").GetComponent<Text>().text = card.Name;    //uložení jména do proměnné                    
                     cardObject.transform.SetParent(_getCraftComponent.GetScrollView().transform.Find("ViewPort").transform, false);    //nastavení rodiče
                     cardObject.transform.localScale = Vector3.one;  //nastavení transformu na scaleování
@@ -201,8 +237,6 @@ namespace Assets.Script.InventoryFolder.CraftFolder
             {
                 _eProfession = EProfession.Cooking;
                 AllOfList(_cardList, _defaultCardList);
-                //...ošetření (pokud je u ohně atd...)
-                //...
             }
             else
             {
@@ -216,8 +250,6 @@ namespace Assets.Script.InventoryFolder.CraftFolder
             {
                 _eProfession = EProfession.Crafting;
                 AllOfList(_cardList, _defaultCardList);
-                //...ošetření (pokud je u stolu(craftingtablu) atd...)
-                //...
             }
             else
             {
@@ -232,8 +264,6 @@ namespace Assets.Script.InventoryFolder.CraftFolder
             {
                 _eProfession = EProfession.Tailoring;
                 AllOfList(_cardList, _defaultCardList);
-                //...ošetření (pokud je u ohně atd...)
-                //...
             }
             else
             {
@@ -247,8 +277,6 @@ namespace Assets.Script.InventoryFolder.CraftFolder
             {
                 _eProfession = EProfession.Smithing;
                 AllOfList(_cardList, _defaultCardList);
-                //...ošetření (pokud je u pece atd...)
-                //...
             }
             else
             {

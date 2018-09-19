@@ -117,7 +117,7 @@ namespace Assets.Script.Camera
             // Set camera rotation
             Quaternion rotation = Quaternion.Euler(yDeg, xDeg, 0);
             // Calculate the desired distance
-            //Debug.Log(Utilities.IsRayCastHit(GameObject.Find("Terrain").transform,"Player","SalesMan","QuestMaster","Enemy"));
+            //Debug.Log(Utilities.IsRayCastHit(GameObject.Find("Terrain").transform,"Player","SalesMan","ThisQuestMaster","Enemy"));
             if (!EventSystem.current.IsPointerOverGameObject())
                 desiredDistance -= Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * ZOOMRATE * Mathf.Abs(desiredDistance);
             desiredDistance = Mathf.Clamp(desiredDistance, MIN_DISTANCE, MAX_DISTANCE);

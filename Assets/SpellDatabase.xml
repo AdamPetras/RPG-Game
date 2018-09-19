@@ -23,12 +23,14 @@ float PercentageDamage { get; set; }
     <LevelToAccess>1</LevelToAccess>
     <GoldToAccess>0</GoldToAccess>
     <ManaCost>2</ManaCost>
-    <Range>1</Range>
+    <Range>3</Range>
     <Cooldown>10</Cooldown>
     <SpellType>Buff</SpellType>
     <Duration>3</Duration>
     <Skill>Constitution</Skill>
-    <PercentageIncrease>150</PercentageIncrease>
+    <Vital></Vital>
+    <DamageStats></DamageStats>
+    <PercentageIncreaseDecrease>150</PercentageIncreaseDecrease>
     <PercentageDamage>0</PercentageDamage>
   </Spell>
   <Spell>
@@ -38,12 +40,14 @@ float PercentageDamage { get; set; }
     <LevelToAccess>2</LevelToAccess>
     <GoldToAccess>0</GoldToAccess>
     <ManaCost>2</ManaCost>
-    <Range>1</Range>
+    <Range>3</Range>
     <Cooldown>4</Cooldown>
     <SpellType>Passive</SpellType>
     <Duration>0</Duration>
     <Skill>Constitution</Skill>
-    <PercentageIncrease>150</PercentageIncrease>
+    <Vital></Vital>
+    <DamageStats></DamageStats>
+    <PercentageIncreaseDecrease>150</PercentageIncreaseDecrease>
     <PercentageDamage>0</PercentageDamage>
   </Spell>
   <Spell>
@@ -53,12 +57,48 @@ float PercentageDamage { get; set; }
     <LevelToAccess>1</LevelToAccess>
     <GoldToAccess>0</GoldToAccess>
     <ManaCost>2</ManaCost>
-    <Range>1</Range>
+    <Range>3</Range>
     <Cooldown>4</Cooldown>
     <SpellType>Damage</SpellType>
     <Duration>0</Duration>
     <Skill></Skill>
-    <PercentageIncrease>0</PercentageIncrease>
+    <Vital></Vital>
+    <DamageStats></DamageStats>
+    <PercentageIncreaseDecrease>0</PercentageIncreaseDecrease>
     <PercentageDamage>200</PercentageDamage>
+  </Spell>
+  <Spell>
+    <ID>4</ID>
+    <Name>FuryShout</Name>
+    <Description>This spell is weakness</Description>
+    <LevelToAccess>1</LevelToAccess>
+    <GoldToAccess>0</GoldToAccess>
+    <ManaCost>2</ManaCost>
+    <Range>3</Range>
+    <Cooldown>17</Cooldown>
+    <SpellType>Weakness</SpellType>
+    <Duration>3</Duration>
+    <Skill></Skill>
+    <Vital>Health</Vital>
+    <DamageStats></DamageStats>
+    <PercentageIncreaseDecrease>25</PercentageIncreaseDecrease>
+    <PercentageDamage>0</PercentageDamage>
+  </Spell>
+  <Spell>
+    <ID>5</ID>
+    <Name>StormStrike</Name>
+    <Description>This spell is Dot</Description>
+    <LevelToAccess>1</LevelToAccess>
+    <GoldToAccess>0</GoldToAccess>
+    <ManaCost>2</ManaCost>
+    <Range>3</Range>
+    <Cooldown>15</Cooldown>
+    <SpellType>Dot</SpellType>
+    <Duration>6</Duration>
+    <Skill></Skill>
+    <Vital></Vital>
+    <DamageStats></DamageStats>
+    <PercentageIncreaseDecrease>0</PercentageIncreaseDecrease>
+    <PercentageDamage>20</PercentageDamage>
   </Spell>
 </Root>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Script.Camera;
@@ -25,12 +26,16 @@ namespace Assets.Script.CharacterFolder
         private GameObject Player;
         public GameObject gameSettings;
         private List<string> _NotAbleNameList;
+
+        private string _name;
+
+        private bool _creating = false;
         // Use this for initialization
         void Awake()
         {
             Instance(ECharacter.Human);
             InitVulgarList();
-            
+            _name = "";
         }
 
         // Update is called once per frame
@@ -42,16 +47,19 @@ namespace Assets.Script.CharacterFolder
 
         void OnGUI()
         {
-            ShowName();
-            ShowSkills();
-            ShowVitals();
-            ShowDamageStats();
-            ShowExperiences();
-            if (_playerComponent.Name.Length < 4 || _NotAbleNameList.Any(_playerComponent.Name.ToLower().Contains))
-                ShowCreateLabel();
-            else
-                CreateButton();
-            SelectCharacter();
+            if (!_creating)
+            {
+                ShowName();
+                ShowSkills();
+                ShowVitals();
+                ShowDamageStats();
+                ShowExperiences();
+                if (_name.Length < 4 || _NotAbleNameList.Any(_name.ToLower().Contains))
+                    ShowCreateLabel();
+                else
+                    CreateButton();
+                // SelectCharacter();
+            }
         }
 
         private void InitVulgarList()
@@ -80,7 +88,7 @@ namespace Assets.Script.CharacterFolder
 
         private void ShowName()
         {
-            _playerComponent.Name = GUI.TextField(new Rect(Screen.width / 2 - TABLE_WIDTH / 2, TABLE_HEIGHT + OFFSET, TABLE_WIDTH, 25), _playerComponent.Name);
+            _name = GUI.TextField(new Rect(Screen.width / 2 - TABLE_WIDTH / 2, TABLE_HEIGHT + OFFSET, TABLE_WIDTH, 25), _name);
             GUI.Label(new Rect(Screen.width / 2 - TABLE_WIDTH / 2, OFFSET, TABLE_WIDTH, TABLE_HEIGHT), "Enter your name", Label);
         }
 
@@ -128,12 +136,32 @@ namespace Assets.Script.CharacterFolder
                     TABLE_HEIGHT), "Create character"))
             {
                 GameSettings.GameState = EGameState.NewGame;
+                _playerComponent.name = _name;
+                _playerComponent.Name = _name;
                 gameSettings.GetComponent<GameSettings>().SaveCharacter();
-                SceneManager.LoadScene("Game");
+                StartCoroutine(LoadNewScene());
+                _creating = true;
+
             }
         }
 
-        private void SelectCharacter()
+        IEnumerator LoadNewScene()
+        {
+            //Debug.Log("Loading");
+            BlackScreen.Print();
+            // Start an asynchronous operation to load the scene that was passed to the LoadNewScene coroutine.
+            
+            // While the asynchronous operation to load the new scene is not yet complete, continue waiting until it's done.
+            yield return new WaitForSeconds(1);
+            AsyncOperation async = Application.LoadLevelAsync("Game");
+            StopCoroutine(LoadNewScene());
+            Debug.Log("Done");
+            yield return null;
+            
+        }
+
+
+        /*private void SelectCharacter()
         {
             GUI.Box(new Rect(OFFSET, Screen.height - TABLE_WIDTH - OFFSET, TABLE_WIDTH, TABLE_WIDTH), "");
             if (GUI.Button(new Rect(new Rect(OFFSET, Screen.height - TABLE_HEIGHT * 4 - OFFSET, TABLE_WIDTH / 2, TABLE_WIDTH / 2)),
@@ -160,7 +188,7 @@ namespace Assets.Script.CharacterFolder
             {
                 StatsOperating(ECharacter.Bull);
             }
-        }
+        }*/
 
         private void Instance(ECharacter eCharacter)
         {
@@ -178,9 +206,10 @@ namespace Assets.Script.CharacterFolder
                 Player = (GameObject)Instantiate(Prefab, pos, Quaternion.identity);
                 Player.GetComponent<CharacterController>().enabled = false;
                 Player.GetComponent<ThirdPersonCamera>().enabled = false;
+                Player.GetComponent<Animator>().enabled = false;
                 _playerComponent = Player.GetComponent<PlayerComponent>();
                 _playerComponent.Prefab = Prefab;
-                _playerComponent.Name = savedName;   //nastavení jména zpět
+               // _playerComponent.Name = savedName;   //nastavení jména zpět
                 StatsOperating(eCharacter);
             }
         }

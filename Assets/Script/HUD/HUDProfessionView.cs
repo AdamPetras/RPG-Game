@@ -1,5 +1,7 @@
 ﻿using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
+using Assets.Script.Interaction;
+using Assets.Script.Menu;
 using Assets.Scripts.InventoryFolder;
 using Assets.Scripts.InventoryFolder.CraftFolder;
 using UnityEngine;
@@ -20,6 +22,7 @@ namespace Assets.Script.HUD
         public static bool Visible;
         public static bool CanIDeactive = true;
         public GameObject GraphicsPanel;
+
         private void Awake()
         {
             _skillView = Instantiate(Resources.Load<GameObject>("Prefab/SkillView"), GraphicsPanel.transform);
@@ -35,9 +38,8 @@ namespace Assets.Script.HUD
         {
             _playerComponent = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>();
             _background.Find("DragPanel").Find("Text").GetComponent<Text>().text = "Profession view";
-            _background.transform.Find("Exit").GetComponent<Button>().onClick.AddListener(OnExit);
+            _background.transform.Find("Exit").GetComponent<Button>().onClick.AddListener(OnHide);
             _skillView.name = "SkillView";
-            Utilities.ListOfAllObjects.Add(_skillView);
             _skillView.SetActive(false);
             Utilities.DisableOrEnableAll(_skillView);
         }
@@ -46,23 +48,35 @@ namespace Assets.Script.HUD
         {
             if (Input.GetKeyUp(KeyCode.B) && !_skillView.activeSelf)
             {
-                _skillView.SetActive(true);
-                Utilities.DisableOrEnableAll(_skillView, true);
-                Visible = true;
+                OnVisible();
             }
             else if (Input.GetKeyUp(KeyCode.B) && _skillView.activeSelf)
             {
-                OnExit();
+                OnHide();
             }
-            if (CraftDataOperating.ExpChanged)  //update poling
+            if (CraftDataOperating.ExpChanged) //update poling
             {
                 UpdateStats();
                 CraftDataOperating.ExpChanged = false;
             }
         }
 
-        private void OnExit()
+        public void OnVisible()
         {
+            if (MainMenu.Visible || InGameTime.Visible)
+                return;
+            MainPanel.OpenWindow(_skillView.name);
+            _skillView.transform.SetAsLastSibling();
+            _skillView.SetActive(true);
+            Utilities.DisableOrEnableAll(_skillView, true);
+            Visible = true;
+        }
+
+        public void OnHide()
+        {
+            if (MainMenu.Visible || InGameTime.Visible)
+                return;
+            MainPanel.CloseWindow(_skillView.name);
             Visible = false;
             _skillView.SetActive(false);
         }

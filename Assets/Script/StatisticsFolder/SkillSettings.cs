@@ -44,7 +44,9 @@ namespace Assets.Script.StatisticsFolder
                 value = 0;
                 foreach (ModifySkill modifySkill in ModifySkills)
                 {
-                    if (modifySkill.secondSkill == null && modifySkill.firstSkill.IfAdd)
+                    if (modifySkill.firstSkill == null && modifySkill.secondSkill == null)
+                        value = modifySkill.defaultValue;
+                    else if (modifySkill.secondSkill == null && modifySkill.firstSkill.IfAdd)
                         value += ((modifySkill.firstSkill.ValuesTogether) * modifySkill.firstRatio);
                     else if (modifySkill.secondSkill == null && !modifySkill.firstSkill.IfAdd && modifySkill.defaultValue != 0)
                     {
@@ -104,6 +106,14 @@ namespace Assets.Script.StatisticsFolder
         {
             this.firstSkill = firstSkill;
             this.firstRatio = firstRatio;
+            secondSkill = null;
+            secondRatio = 0;
+            this.defaultValue = defaultValue;
+        }
+        public ModifySkill(float defaultValue)
+        {
+            this.firstSkill = null;
+            this.firstRatio = 0;
             secondSkill = null;
             secondRatio = 0;
             this.defaultValue = defaultValue;

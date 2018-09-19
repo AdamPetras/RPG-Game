@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Script.CharacterFolder;
 using Assets.Script.CombatFolder;
+using Assets.Script.Enemy;
 using Assets.Script.Extension;
 using Assets.Script.HUD;
 using Assets.Script.StatisticsFolder;
@@ -16,14 +17,14 @@ namespace Assets.Script.SpellFolder
     {
         public Spell Spell;
         public GameObject SpellInfo;
-        private float timer;
-        private const float INFO_TRESHOLD = 2;
+        private const float INFO_TRESHOLD = 1;
         public bool preCast;
         bool isCasting;
         public bool cantCast;
         Animation castAnimation;
         private PlayerComponent _playerComponent;
         public static List<ComponentSpell> SpellList = new List<ComponentSpell>();
+        private GameObject _spellBook;
         void Awake()
         {
         }
@@ -39,13 +40,13 @@ namespace Assets.Script.SpellFolder
                     StartCoroutine(PreCast());
                 else if (!Spell.Unlocked) Spell.Unlock(gameObject);
             });
+            _spellBook = GameObject.Find("Graphics").transform.Find("SpellBook").gameObject;
         }
 
         void Update()
-        {           
+        {
             if (_playerComponent == null)
             {
-                Debug.Log("finding");
                 GameObject obj = GameObject.FindGameObjectWithTag("Player");
                 if (obj != null)
                     _playerComponent = obj.GetComponent<PlayerComponent>();
@@ -55,15 +56,10 @@ namespace Assets.Script.SpellFolder
         //bude hlásit že neni volána ale je volána (InvokeRepeating)
         private void CalcPointerOn()
         {
-            timer++;
-            if (timer >= INFO_TRESHOLD)
-            {
-                SpellInfo.transform.Find("Panel").position =
-                    new Vector2(transform.position.x - 24, transform.position.y + 24);
-                SpellInfo.SetActive(true);
-                timer = 0;
-                CancelInvoke("CalcPointerOn");
-            }
+            SpellInfo.transform.Find("Background").position =
+                new Vector2(transform.position.x - 24, transform.position.y + 24);
+            SpellInfo.SetActive(true);
+            CancelInvoke("CalcPointerOn");
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -72,8 +68,8 @@ namespace Assets.Script.SpellFolder
             {
                 if (Spell != null)
                     if (Spell.Unlocked)
-                        SpellInfo.transform.Find("Panel").Find("Desc").GetComponent<Text>().text = Spell.Description;
-                InvokeRepeating("CalcPointerOn", 1, 1f);
+                        SpellInfo.transform.Find("Background").Find("Desc").GetComponent<Text>().text = Spell.Description;
+                InvokeRepeating("CalcPointerOn", 0.5f, 1);
             }
         }
 
@@ -81,7 +77,6 @@ namespace Assets.Script.SpellFolder
         {
             if (SpellInfo != null)
             {
-                timer = 0;
                 SpellInfo.SetActive(false);
                 CancelInvoke("CalcPointerOn");
             }
@@ -109,7 +104,6 @@ namespace Assets.Script.SpellFolder
                 if (true)//Input.GetMouseButtonDown(0)
                 {
                     //Left click confirm
-                    Debug.Log("Casting begun");
                     StartCoroutine(OnBeginCast());
                     yield break;
                 }
@@ -139,12 +133,14 @@ namespace Assets.Script.SpellFolder
             {
                 if (gameObject.transform.parent.GetComponent<SpellSlot>().IsBook)
                 {
+                    if (!HUDSpellBook.Visible && !HUDSpellBook.CanIDeactive)      //pokud neni visible a nemůžu deaktivovat jak dojde cooldown tak deaktivuju
+                        _spellBook.SetActive(false);
                     HUDSpellBook.CanIDeactive = true;
                 }
             }
             if (Spell.IWantToDestroy)
             {
-                SpellList.Remove(gameObject.GetComponent<ComponentSpell>());               
+                SpellList.Remove(gameObject.GetComponent<ComponentSpell>());
                 Destroy(gameObject);
                 Spell.IWantToDestroy = false;
             }
@@ -169,8 +165,8 @@ namespace Assets.Script.SpellFolder
         public void castAbility()
         {
             Spell.Cast(gameObject);
-            if (Spell.SpellType == ESpell.Buff && Spell.Unlocked)
-                StartCoroutine(Spell.AnullBuff(1));
+            if ((Spell.SpellType == ESpell.Buff || Spell.SpellType == ESpell.Weakness || Spell.SpellType == ESpell.Dot) && Spell.Unlocked)
+                StartCoroutine(Spell.AnullBuffDotOrWeakness(1));
         }
 
         private bool Conditions(float manaCost)
@@ -181,34 +177,68 @@ namespace Assets.Script.SpellFolder
                 return false;
             if (_playerComponent.character.ECharacterState == ECharacterState.Dead)
                 return false;
+            if (PlayerAttack.Interact != null)
+                if (Spell.Range < Vector3.Distance(_playerComponent.transform.position,
+                        PlayerAttack.Interact.transform.position))
+                {
+                    MyDebug.Log("Not enought range.");
+                    return false;
+                }
             //buff conds
             if (Spell.SpellType == ESpell.Buff || Spell.SpellType == ESpell.Passive)
             {
-                Debug.Log(_playerComponent.SpellList.Count);
-                if (_playerComponent.SpellList.Any(s => s.ID == Spell.ID))
+                Debug.Log(_playerComponent.character.SpellList.Count);
+                if (_playerComponent.character.SpellList.Any(s => s.ID == Spell.ID))
                 {
                     Debug.Log("You cant set this buff on");
                     MyDebug.Log("You cant set this buff on");
                     return false;
                 }
             }
-            else
+            else if (Spell.SpellType == ESpell.Weakness|| Spell.SpellType == ESpell.Dot)
+            {
+                if (Spell.PlantedObject == null)
+                {
+                    MyDebug.Log("Spell plantedObject is NULL");                   
+                }
+                else
+                {
+                    if (Spell.PlantedObject.GetComponent<EnemyStatistics>().EnemyCharacter.SpellList
+                        .Any(s => s.ID == Spell.ID))
+                    {
+                        Debug.Log("You cant set this Weakness/Dot on");
+                        MyDebug.Log("You cant set this Weakness/Dot on");
+                        return false;
+                    }                   
+                }
+                return DamageWeaknessConds();
+            }
+            else if (Spell.SpellType == ESpell.Damage)
             {
                 //damage spells
-                GameObject enemyObject = PlayerAttack.Interact;
-                if (enemyObject == null)
-                {
-                    MyDebug.Log("No target");
-                    return false;
-                }
-                if (enemyObject.tag != "Enemy")
-                    return false;
+                return DamageWeaknessConds();
             }
             //mana withdraw
             if (manaCost > _playerComponent.character.GetVital((int)EVital.Mana).CurrentValue)
                 return false; //NOT ENOUGH MANA
             _playerComponent.character.GetVital((int)EVital.Mana).CurrentValue -= manaCost;
 
+            return true;
+        }
+
+        private bool DamageWeaknessConds()
+        {
+            GameObject enemyObject = PlayerAttack.Interact;
+            if (enemyObject == null)
+            {
+                MyDebug.Log("No target");
+                return false;
+            }
+            if (enemyObject.tag != "Enemy")
+                return false;
+            if (enemyObject.GetComponent<EnemyStatistics>().EnemyCharacter.ECharacterState ==
+                ECharacterState.Dead)
+                return false;
             return true;
         }
     }

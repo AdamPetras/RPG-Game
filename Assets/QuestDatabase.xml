@@ -7,7 +7,7 @@
     <Level>1</Level>
     <Experiences>100</Experiences>
     <QuestMasterAsign>1</QuestMasterAsign>
-    <QuestMasterSubmit>1</QuestMasterSubmit>
+    <QuestMasterSubmit>2</QuestMasterSubmit>
     <EQuest>Delivery</EQuest>
     <Money>10</Money>
     <ItemReward>1,1000</ItemReward>
@@ -24,8 +24,8 @@
     <Description>second quest</Description>
     <Level>1</Level>
     <Experiences>100</Experiences>
-    <QuestMasterAsign>2</QuestMasterAsign>
-    <QuestMasterSubmit>1</QuestMasterSubmit>
+    <QuestMasterAsign>1</QuestMasterAsign>
+    <QuestMasterSubmit>2</QuestMasterSubmit>
     <EQuest>Delivery</EQuest>
     <Money>10</Money>
     <ItemReward>1</ItemReward>
@@ -42,7 +42,7 @@
     <Description>third quest</Description>
     <Level>1</Level>
     <Experiences>100</Experiences>
-    <QuestMasterAsign>1</QuestMasterAsign>
+    <QuestMasterAsign>3</QuestMasterAsign>
     <QuestMasterSubmit>2</QuestMasterSubmit>
     <EQuest>Talk</EQuest>
     <Money>10</Money>
@@ -53,5 +53,23 @@
     <EnemyId>0</EnemyId>
     <TotalKills>0</TotalKills>
     <QuestMastersID>1,2,3</QuestMastersID>
+  </Quest>
+  <Quest>
+    <ID>4</ID>
+    <Name>Kill</Name>
+    <Description>Kill quest</Description>
+    <Level>1</Level>
+    <Experiences>1000</Experiences>
+    <QuestMasterAsign>3</QuestMasterAsign>
+    <QuestMasterSubmit>3</QuestMasterSubmit>
+    <EQuest>Kill</EQuest>
+    <Money>100</Money>
+    <ItemReward>15</ItemReward>
+    <ItemRewardQuantity>5</ItemRewardQuantity>
+    <ItemToDelivery>0</ItemToDelivery>
+    <ItemToDeliveryQuantity>0</ItemToDeliveryQuantity>
+    <EnemyId>1</EnemyId>
+    <TotalKills>12</TotalKills>
+    <QuestMastersID>0</QuestMastersID>
   </Quest>
 </Root>

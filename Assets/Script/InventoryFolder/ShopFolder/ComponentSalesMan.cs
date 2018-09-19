@@ -10,6 +10,8 @@ namespace Assets.Script.InventoryFolder.ShopFolder
         private SalesMan _salesMan;
         private PlayerComponent _playerComponent;
         private List<ObjectGenerate> _salesManList;
+        public int Id;
+        public string Name;
         public int Health;
         public int Mana;
         public int Level;
@@ -18,9 +20,9 @@ namespace Assets.Script.InventoryFolder.ShopFolder
         public List<SaleItem> ItemList;
         void Start()
         {
-            _salesManList = SalesManGenerate.SalesManList;
-            ObjectGenerate obj = _salesManList.Find(s => s.Name == name);
-            _salesMan = new SalesMan(obj.Id, obj.Name, obj.Position, obj.Prefab, ItemList);
+            name = Name;
+            _salesMan = new SalesMan(Id, Name, transform.position, gameObject, ItemList);
+            SalesManGenerate.SalesManList.Add(this);
         }
 
         void Update()

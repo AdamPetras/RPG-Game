@@ -49,7 +49,7 @@ namespace Assets.Script.InventoryFolder.ShopFolder
             Position = position;
             Prefab = prefab;
             _itemList = itemList;
-            _salesmanHud = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/SalesmanPrefab"), GameObject.Find(Name).transform);
+            _salesmanHud = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/SalesmanPrefab"), GameObject.Find("Graphics").transform);
             _salesmanHud.name = "SalesmanPrefab";
             InitGUI();
         }
@@ -75,10 +75,13 @@ namespace Assets.Script.InventoryFolder.ShopFolder
             _salesmanHud.SetActive(false);
             Utilities.DisableOrEnableAll(_salesmanHud);
             ComponentSalesMan.Visible = false;
+            MainPanel.CloseWindow(_salesmanHud.name);
         }
 
         public void TalkToSalesMan(Transform transform, Transform playerTransform)
         {
+            if (Input.GetKeyUp(KeyCode.Escape))
+                OnExit();
             if (transform != null && playerTransform != null)
                 if (Input.GetMouseButtonUp(1) && Utilities.IsDistanceLess(transform,playerTransform,2f))
                     if (Utilities.IsRayCastHit(transform))
@@ -86,6 +89,7 @@ namespace Assets.Script.InventoryFolder.ShopFolder
                         _salesmanHud.SetActive(true);
                         Utilities.DisableOrEnableAll(_salesmanHud, true);
                         ComponentSalesMan.Visible = true;
+                        MainPanel.OpenWindow(_salesmanHud.name);
                     }
         }
 
@@ -107,8 +111,16 @@ namespace Assets.Script.InventoryFolder.ShopFolder
                 NewItem newItem = new NewItem(NewItem.IdToItem(item.Id));
                 newItem.ActualStack = item.Stack;
                 GameObject itemObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/SaleSlot"), _viewport, false);
-                itemObj.transform.Find("SaleItem").GetComponent<SaleSlot>().Id = newItem.ID;
-                itemObj.transform.Find("SaleItem").GetComponent<Image>().sprite = newItem.Icon;
+                Transform saleItemTransform = itemObj.transform.Find("SaleItem");
+                saleItemTransform.GetComponent<ComponentItem>().ID = item.Id;
+                saleItemTransform.GetComponent<ComponentItem>().ItemStats = newItem.ItemStats;
+                saleItemTransform.GetComponent<ComponentItem>().Name = newItem.Name;
+                saleItemTransform.GetComponent<ComponentItem>().Icon = newItem.Icon;
+                saleItemTransform.GetComponent<ComponentItem>().EItemState = EItemState.Shop;
+                saleItemTransform.GetComponent<ComponentItem>().ActualStack = item.Stack;
+                saleItemTransform.GetComponent<ComponentItem>().SellPrice = newItem.SellPrice;
+                saleItemTransform.GetComponent<InventoryMouseHandler>().CanIMove = false;
+                saleItemTransform.GetComponent<Image>().sprite = newItem.Icon;
                 itemObj.transform.Find("Name").GetComponent<Text>().text = newItem.Name;
                 itemObj.transform.Find("MoneyText").GetComponent<Text>().text = newItem.BuyPrice.ToString();
             }

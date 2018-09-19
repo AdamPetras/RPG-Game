@@ -17,7 +17,6 @@ namespace Assets.Script.Menu
         private GameSettings _gameSettings;
         private GameObject _saveLoadObj;
         private GameObject _menu;
-        //private List<MyButton> _buttonList;
         private Transform[] _buttonList;
 
         private const int NumOfSaves = 5;
@@ -60,6 +59,8 @@ namespace Assets.Script.Menu
             {
                 GameSettings.GameState = EGameState.InGameLoad;
                 _gameSettings.LoadCharacter(save);
+                _menu.GetComponent<MainMenu>().CouldBeExited = true;
+                _menu.GetComponent<MainMenu>().OnResume();   
             }     
             OnExit();
         }

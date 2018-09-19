@@ -28,12 +28,13 @@ namespace Assets.Script
                 _playerCharacter = ObjectGenerate.CharacterInstantiate(Resources.Load<GameObject>("Prefab/Human"),Vector3.zero);          
             LoadSettings();
             LoadDebug();
+            LoadBlackScreen();
             _playerComponentScript = _playerCharacter.GetComponent<PlayerComponent>();           
             _playerComponentScript.Prefab = Resources.Load<GameObject>("Prefab/Human");
             _playerCharacter.GetComponent<CharacterController>().enabled = true;
             _playerCharacter.GetComponent<ThirdPersonCamera>().enabled = true;
+            _playerCharacter.GetComponent<Animator>().enabled = true;
             _playerComponentScript.Created = true;
-
         }
 
 
@@ -76,6 +77,15 @@ namespace Assets.Script
             {
                 GameObject debug = Instantiate(Resources.Load<GameObject>("Prefab/Debug"));
                 debug.name = "Debug";
+            }
+        }
+        public void LoadBlackScreen()
+        {
+            GameObject gs = GameObject.Find("BlackScreen");
+            if (gs == null)
+            {
+                GameObject debug = Instantiate(Resources.Load<GameObject>("Prefab/BlackScreen"));
+                debug.name = "BlackScreen";
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Assets.Script.Interaction;
 using Assets.Script.InventoryFolder.CraftFolder;
 using Assets.Script.Menu;
 using Assets.Script.QuestFolder;
@@ -14,6 +15,7 @@ namespace Assets.Script.Camera
 
         public string moveStatus = "idle"; //movestatus for animations 
 
+        public bool canIRun = true;
         //Movement speeds 
         private float jumpHeight = 5.0f; //Jumpspeed / Jumpheight 
 
@@ -29,33 +31,31 @@ namespace Assets.Script.Camera
         private bool grounded = false; //temp var if the character is grounded 
         private bool sliding = false;
         private Vector3 moveDirection = Vector3.zero; //move direction of the Character 
-        private bool isWalking = false; //toggle var between move and run 
+        public bool isWalking = false; //toggle var between move and run 
         private bool jumping = false; //temp var for jumping 
         private bool mouseSideButton = false; //temp var for mouse side buttons 
         private float pbuffer = 0.0f; //Cooldownpuffer for SideButtons 
         private float coolDown = 0.5f; //Cooldowntime for SideButtons 
         private CharacterController controller; //CharacterController for movement 
-
+        public Animator[] animations;
         private Vector3 slidingDirection;
-        //Every Frame 
-        void OnMouseDrag()
+
+        void Start()
         {
-            Debug.Log("drag");
+            controller = GameObject.FindGameObjectWithTag("Player").GetComponent<CharacterController>();
         }
 
         void Update()
         {
-            if (ComponentCraftMenu.Visible)
+            if (ComponentCraftMenu.Visible || BlackScreen.Visible || InGameTime.Visible)
                 return;
-            controller = GameObject.FindGameObjectWithTag("Player").GetComponent<CharacterController>();
+
             //Set idel animation 
             moveStatus = "idle";
-            isWalking = true;
-
             // Hold "Run" to run 
-            if (Input.GetAxis("Run") != 0)
+            if (Input.GetAxis("Run") != 0 && canIRun && (Input.GetAxis("Vertical") != 0))
                 isWalking = false;
-
+            else isWalking = true;
             // Only allow movement and jumps while grounded 
             if (grounded && !sliding)
             {
@@ -168,23 +168,33 @@ namespace Assets.Script.Camera
                 moveStatus = "jump";
             if (jumping && swimming)
                 moveStatus = "swimup";
+            if ((moveStatus == "walking" || moveStatus == "backwalking") && animations[0].GetCurrentAnimatorStateInfo(0).length <
+                animations[0].GetCurrentAnimatorStateInfo(0).normalizedTime)
+            {
+                animations[0].Play(0);
+            }
+            if (moveStatus == "idle")
+                foreach (Animator anim in animations)
+                {
+                    anim.Rebind();
+                }
         }
 
-       /* void OnControllerColliderHit(ControllerColliderHit hit)
-        {
-            float groundSlopeAngle = Vector3.Angle(hit.normal, Vector3.up);
-            if (groundSlopeAngle > controller.slopeLimit && groundSlopeAngle < 80)
-            {
-                Vector3 normal = hit.normal;
-                Vector3 c = Vector3.Cross(Vector3.up, normal);
-                slidingDirection = Vector3.Cross(c, normal);
-                sliding = true;
-            }
-            else
-            {
-                slidingDirection = Vector3.zero;
-                sliding = false;
-            }
-        }*/
+         void OnControllerColliderHit(ControllerColliderHit hit)
+         {
+             float groundSlopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+             if (groundSlopeAngle > controller.slopeLimit && groundSlopeAngle < 80)
+             {
+                 Vector3 normal = hit.normal;
+                 Vector3 c = Vector3.Cross(Vector3.up, normal);
+                 slidingDirection = Vector3.Cross(c, normal);
+                 sliding = true;
+             }
+             else
+             {
+                 slidingDirection = Vector3.zero;
+                 sliding = false;
+             }
+         }
     }
 }

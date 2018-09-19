@@ -72,7 +72,7 @@ namespace Assets.Script.CombatFolder
 
         public static float DamageOscilation(float damage)
         {
-            return Random.Range(-damage * 1 / 8, damage * 1 / 8);
+            return Random.Range(-damage * 1 / 6, damage * 1 / 6);
         }
     }
 }

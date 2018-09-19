@@ -1,28 +1,26 @@
-﻿using Assets.Script.CharacterFolder;
+﻿using System;
+using System.Collections.Generic;
+using Assets.Script.CharacterFolder;
 using Assets.Script.Enemy;
 using Assets.Script.HUD;
 using Assets.Script.StatisticsFolder;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Assets.Script.CombatFolder
 {
     public class EnemyAttack : Attack
     {
-        private DamageHud _damageHud;
+        private static readonly List<GameObject> DamageSigns = new List<GameObject>();
+        private static readonly Transform Background = GameObject.Find("DragPanel").transform.GetChild(0);
         public EnemyAttack(Transform transform)
         {
             PlayerTransform = GameObject.FindGameObjectWithTag("Player").transform;
             EnemyTransform = transform;
             PlayerComponent = PlayerTransform.GetComponent<PlayerComponent>();
             EnemyStatistics = transform.GetComponent<EnemyStatistics>();
-            _damageHud = new DamageHud(Color.red, 30, false);
             DamageDone = 0;
         }
-       /* public void OnGUI()
-        {
-            if (DamageDone != 0)
-                _damageHud.OnGUI(DamageDone, false);
-        }*/
         protected override void LetsAttack()
         {
             base.LetsAttack();
@@ -48,6 +46,7 @@ namespace Assets.Script.CombatFolder
                         float block = PlayerComponent.character.GetDamageStats((int)EDamageStats.DamageBlock).CurrentValue;     //nastavení bloku     //oscilace damagu
                         DamageDone = damage + DamageOscilation(damage) - block;     //výsledný útok
                         PlayerComponent.character.DamageDone(DamageDone, true); //odečtení od vitalu
+                        DamageHud.Hit(false,DamageDone);
                         if (PlayerComponent.character.GetVital((int)EVital.Health).CurrentValue <= 1)  //pokud má méně životu mež 0 nebo 0 životů tak nastavení enumu
                         {
                             PlayerComponent.character.ECharacterState = ECharacterState.Dead;

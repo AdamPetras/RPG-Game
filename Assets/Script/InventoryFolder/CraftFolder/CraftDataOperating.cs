@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Script.CharacterFolder;
+using Assets.Script.Extension;
 using Assets.Script.InventoryFolder;
+using Assets.Script.InventoryFolder.CraftFolder;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -33,11 +35,11 @@ namespace Assets.Scripts.InventoryFolder.CraftFolder
             _getCraftComponent = getCraftComponent;
             _getCraftComponent.GetCraftButton().onClick.AddListener(AddToInventory);
             _objectList = new List<GameObject>();
-            _craftItemPrefab = Resources.Load("Prefab/CraftItem") as GameObject;
+            _craftItemPrefab = Resources.Load("Prefab/Item") as GameObject;
         }
 
         public void ItemClicked(PlayerComponent playerComponent)
-        {
+        {           
             int index = 0;
             _playerComponent = playerComponent;
             foreach (GameObject obj in _objectList.ToArray())
@@ -46,21 +48,32 @@ namespace Assets.Scripts.InventoryFolder.CraftFolder
             }
             foreach (CraftItem craftItem in SelectedItem.CraftItems)
             {
-                InstatiateItem(NewItem.IdToItem(craftItem.ID).Icon, SelectedItem.CraftItems[index].NumberOfItems.ToString(), _getCraftComponent.GetCraftNeedPanel());
+                InstatiateItem(NewItem.IdToItem(craftItem.ID), SelectedItem.CraftItems[index].NumberOfItems.ToString(), _getCraftComponent.GetCraftNeedPanel());
                 index++;
             }
-            InstatiateItem(NewItem.IdToItem(SelectedItem.ID).Icon, SelectedItem.Quantity.ToString(), _getCraftComponent.GetProductPanel());
+            InstatiateItem(NewItem.IdToItem(SelectedItem.ID), SelectedItem.Quantity.ToString(), _getCraftComponent.GetProductPanel());
             _getCraftComponent.GetTextNeedLevel().GetComponent<Text>().text =SelectedItem.EProfession+" level need : "+
                 SelectedItem.ProfesionLevelNeed;
+            _getCraftComponent.GetCraftItemName().GetComponent<Text>().color = Utilities.ColorByItemRank(SelectedItem.ERank);
+            _getCraftComponent.GetCraftItemName().GetComponent<Text>().text = SelectedItem.Name;
+            string s = "";
+            foreach (ItemStats stats in SelectedItem.ItemStats)
+            {
+                s += stats.ESkill + " " + stats.Value + "\n";
+            }
+            _getCraftComponent.GetCraftItemInfo().GetComponent<Text>().text =
+                s + "Sell price: " + SelectedItem.SellPrice;
         }
 
-        private void InstatiateItem(Sprite icon, string text, Transform parent)
+        private void InstatiateItem(NewItem item, string text, Transform parent)
         {
             GameObject itemObject = Object.Instantiate(_craftItemPrefab);
             _objectList.Add(itemObject);
-            if (icon != null)
-                itemObject.GetComponent<Image>().sprite = icon;
-            itemObject.transform.Find("Text").GetComponent<Text>().text = text;
+            if (item.Icon != null)
+                NewItem.SetStats(itemObject,item);           
+            itemObject.GetComponent<InventoryMouseHandler>().CanIMove = false;
+            if(Int32.Parse(text)>1)
+            itemObject.transform.Find("Stack").GetComponent<Text>().text = text;
             itemObject.transform.SetParent(parent, true);
             itemObject.transform.localScale = Vector3.one;
         }
@@ -89,11 +102,36 @@ namespace Assets.Scripts.InventoryFolder.CraftFolder
             return true;
         }
 
+        private bool YouNeedToBeOnPlace(EProfession eProfession)
+        {
+            if (eProfession == EProfession.Smithing && ComponentCraftMenu.IsNearAnvil)
+                return true;
+            if (eProfession == EProfession.Crafting && ComponentCraftMenu.IsNearCraftTable)
+                return true;
+            if (eProfession == EProfession.Cooking && ComponentCraftMenu.IsNearRange)
+                return true;
+            if (eProfession == EProfession.Tailoring && ComponentCraftMenu.IsNearTailorKit)
+                return true;
+            return false;
+        }
+
         public void AddToInventory()
         {
             if (SelectedItem != null)
                 if (IsInventoryContains()&& IsLevelAvailable(SelectedItem))
                 {
+                    if (!YouNeedToBeOnPlace(SelectedItem.EProfession))
+                    {
+                        if(SelectedItem.EProfession == EProfession.Tailoring)
+                            MyDebug.LogWarning("You have to be near tailoring kit");
+                        if (SelectedItem.EProfession == EProfession.Smithing)
+                            MyDebug.LogWarning("You have to be near anvil and furnace");
+                        if (SelectedItem.EProfession == EProfession.Crafting)
+                            MyDebug.LogWarning("You have to be near crafting table");
+                        if (SelectedItem.EProfession == EProfession.Cooking)
+                            MyDebug.LogWarning("You have to be near range");
+                        return;
+                    }
                     SelectedItem.ActualStack = SelectedItem.Quantity;
                     if (SlotManagement.AddToInventory(SelectedItem))
                     {

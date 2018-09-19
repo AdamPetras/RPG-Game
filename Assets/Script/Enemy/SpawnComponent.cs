@@ -13,7 +13,12 @@ namespace Assets.Script.Enemy
         {
             SpawnedEnemies = new List<GameObject>();
             _onSpawnSet = false;
-            foreach (GameObject enemies in SpawnedEnemies.Where(s => Vector3.Distance(s.transform.position, GameObject.FindGameObjectWithTag("Player").transform.position) < 50))
+        }
+
+        private void Start()
+        {
+            Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
+            foreach (GameObject enemies in SpawnedEnemies.Where(s => Vector3.Distance(s.transform.position, playerTransform.position) < 50))
             {
                 foreach (MonoBehaviour c in enemies.GetComponents<MonoBehaviour>())
                 {

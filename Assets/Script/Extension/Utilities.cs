@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Script.Camera;
+using Assets.Script.QuestFolder;
+using Assets.Script.SpellFolder;
+using Assets.Script.StatisticsFolder;
 using Assets.Scripts;
+using Assets.Scripts.InventoryFolder;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -11,7 +15,6 @@ namespace Assets.Script.Extension
     public class Utilities
     {
         public static bool _dragging;
-        public static List<GameObject> ListOfAllObjects = new List<GameObject>();
         private static Vector2 _startDrag;
         private static Vector2 _dragPosition;
         public Utilities()
@@ -48,6 +51,19 @@ namespace Assets.Script.Extension
                 return returnRect;
             }
             return new Rect(_dragPosition.x, _dragPosition.y, draggingRect.width, draggingRect.height);
+        }
+
+        public static Color ColorByItemRank(ERank rank)
+        {
+            if (rank == ERank.Common)
+                return Color.white;
+            if (rank == ERank.Uncommon)
+                return Color.yellow;
+            if (rank == ERank.Rare)
+                return Color.green;
+            if (rank == ERank.Epic)
+                return Color.red;
+            return Color.white;
         }
 
         public static bool IsDistanceLess(Transform obj1, Transform obj2, float distance)
@@ -89,6 +105,12 @@ namespace Assets.Script.Extension
             return null;
         }
 
+        public static void ClearStaticCaches()
+        {
+            ComponentSpell.SpellList.Clear();
+            QuestMasterGenerate.QuestMasterList.Clear();
+        }
+
         public static Vector3 SetPositionToCopyTerrain(Vector3 position)
         {
             position.y = Terrain.activeTerrain.SampleHeight(position);
@@ -126,15 +148,16 @@ namespace Assets.Script.Extension
             Ray ray = UnityEngine.Camera.main.ScreenPointToRay(Input.mousePosition);
             List<RaycastHit> hit = Physics.RaycastAll(ray, 100).ToList();
             if (hit.Count > 0)
-                if (hit[0].transform == transform)
-                {
-                    return true; //Set that we hit something
-                }
-            if (hit.Count > 1)
             {
-                if (hit[1].transform == transform)
-                {
-                    return true;
+                bool first = false;
+                foreach (RaycastHit rayHit in hit)
+                {                 
+                    if(rayHit.transform == transform && !first)
+                    {
+                        return true; //Set that we hit something
+                    }
+                    if (rayHit.transform.tag == transform.tag)
+                        first = true;
                 }
             }
             return false;

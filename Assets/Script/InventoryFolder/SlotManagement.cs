@@ -6,6 +6,7 @@ using Assets.Script.Extension;
 using Assets.Script.StatisticsFolder;
 using Assets.Scripts.InventoryFolder;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Assets.Script.InventoryFolder
@@ -14,11 +15,14 @@ namespace Assets.Script.InventoryFolder
     {
         private static Character _character;
         public static bool StatsChanged;
-
+        private static ComponentInventory _componentInventory;
+        private static PlayerComponent _playerComponent;
         public SlotManagement(Character character)
         {
             _character = character;
             StatsChanged = false;
+            _componentInventory = GameObject.Find("GameMaster").GetComponent<ComponentInventory>();
+            _playerComponent = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>();
         }
         public static bool CanWeStack(NewItem firstItem, NewItem secondItem)
         {
@@ -58,17 +62,16 @@ namespace Assets.Script.InventoryFolder
             Transform transform = null;
             try
             {
-                Debug.Log(GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventorySlotList.Count);
                 if (eItemState == EItemState.Inventory)
                 {
-                    transform = GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventorySlotList.Find(s => !s.GetComponent<Slot>().Occupied).transform;
+                    transform = _componentInventory.InventorySlotList.Find(s => !s.GetComponent<Slot>().Occupied).transform;
                 }
                 else if (eItemState == EItemState.Armor)
                 {
                     if (typeOfSlot == ESubtype.Axe || typeOfSlot == ESubtype.Sword || typeOfSlot == ESubtype.Knife)
                         typeOfSlot = ESubtype.Weapon;
-                    transform = GameObject.Find("StatsView").transform.Find("Background").Find(typeOfSlot + "Slot");
-                    Debug.Log(typeOfSlot);
+                   // if(_playerComponent.ArmorList.Any(s=>s.EItemState == eItemState && s.Subtype == typeOfSlot && s.Name != ""))
+                        transform = GameObject.Find("StatsView").transform.Find("Background").Find(typeOfSlot + "Slot");
                     if (transform.GetComponent<ArmorSlot>().Occupied)
                         return null;
                 }
@@ -92,7 +95,7 @@ namespace Assets.Script.InventoryFolder
 
 
 
-        private static void AddItemByStack(ComponentItem item)
+        private static bool AddItemByStack(ComponentItem item)
         {
             int differ = item.ActualStack;
             List<ComponentItem> foundItems;
@@ -112,23 +115,28 @@ namespace Assets.Script.InventoryFolder
                         foundItem.ActualStack += differ;
                         ShowStack(foundItem);
                         GameObject.Destroy(item.gameObject);
-                        return;
+                        return true;
                     }
-
                     ShowStack(foundItem);
+                    //Debug.Log(foundItem.ID);
                 }
             }
             do
             {
                 GameObject obj = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/Item"));
+                NewItem.SetStats(obj, new NewItem(NewItem.IdToItem(item.ID)));
                 ComponentItem mainItem = obj.GetComponent<ComponentItem>();
                 Transform transform = FindEmptySlot(EItemState.Inventory);
-                NewItem.SetStats(obj, new NewItem(NewItem.IdToItem(item.ID)));
+                //Debug.Log(mainItem.ID);
                 if (transform == null)
-                    return;
+                {
+                    GameObject.Destroy(obj);
+                    return false;
+                }
                 transform.GetComponent<Slot>().Occupied = true;
                 mainItem.EItemState = EItemState.Inventory;
-                GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventoryList.Add(mainItem);
+                _componentInventory.InventoryList.Add(mainItem);
+
                 if (differ > mainItem.MaximumStack)
                 {
                     mainItem.ActualStack = mainItem.MaximumStack;
@@ -143,23 +151,116 @@ namespace Assets.Script.InventoryFolder
                 ShowStack(mainItem);
             } while (differ > 0);
             GameObject.Destroy(item.gameObject);
+            return true;
         }
 
         public static bool IsInventoryFull()
         {
-            return GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventorySlotList.All(s => s.GetComponent<Slot>().Occupied);
+            return _componentInventory.InventorySlotList.All(s => s.GetComponent<Slot>().Occupied);
         }
 
         public static bool AddToInventory(GameObject itemObject)
         {
-            AddItemByStack(itemObject.GetComponent<ComponentItem>());
+            
+            return AddItemByStack(itemObject.GetComponent<ComponentItem>());
+        }
+
+        public static bool AddToInventory(NewItem componentItem)
+        {
+            GameObject obj = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/Item"));
+            NewItem.SetStats(obj, componentItem);
+            if (AddItemByStack(obj.GetComponent<ComponentItem>()))
+                return true;
+            GameObject.Destroy(obj);
+            return false;
+        }
+
+        public static int MoneyPounch()
+        {
+            if (FindItemInInventory(0) != null)
+                return FindItemInInventory(0).ActualStack;
+            return 0;
+        }
+
+        public static bool AddMoney(uint money)
+        {
+            if (MoneyPounch() == 0)
+            {
+                NewItem moneyItem = new NewItem(NewItem.IdToItem(0));
+                moneyItem.ActualStack = (int) money;
+                AddToInventory(moneyItem);
+                return true;
+            }
+            ComponentItem moneyCompItem = FindItemInInventory(0);
+            if (moneyCompItem)
+            {
+                moneyCompItem.ActualStack += (int)money;
+                ShowStack(moneyCompItem);
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool MoneyWithdraw(uint count)
+        {
+            if (count == 0)
+                return true;
+            if (!AreTheseMoneyEnough(count)) return false;
+            ComponentItem money = FindItemInInventory(0);
+            money.ActualStack -= (int)count;
+            if (money.ActualStack == 0)
+                DeleteItemByStacks(money, 0);
+            else
+                ShowStack(money);
             return true;
         }
 
+        public static bool AreTheseMoneyEnough(uint count)
+        {
+            //Debug.Log(count);
+            if (count == 0)
+                return true;
+            if (FindItemInInventory(0) == null) return false;
+            return FindItemInInventory(0).ActualStack >= count;
+        }
+
+        public static bool RemoveFromInventory(ComponentItem item)
+        {
+            if (_componentInventory.InventoryList.Contains(item))
+            {
+                _componentInventory.InventoryList.Remove(item);
+                return true;
+            }
+            return false;
+        }
+        public static bool RemoveFromInventory(GameObject obj)
+        {
+            ComponentItem item = obj.GetComponent<ComponentItem>();
+            if (item != null)
+            {
+                if (_componentInventory.InventoryList.Contains(item))
+                {
+                    _componentInventory.InventoryList.Remove(item);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static void SwapItemsInInventory(Transform sourceItem,Transform destinationItem,Transform sourceItemParrent, Transform destinationItemParrent, Slot sourceSlot, Slot destinationSlot)
+        {
+            sourceSlot.Occupied= true;
+            destinationSlot.Occupied = true;
+            destinationItem.transform.SetParent(sourceItemParrent);
+            sourceItem.SetParent(destinationItemParrent);
+        }
+
+
+
         public static bool AddToInventory(ComponentItem componentItem)
         {
-            AddItemByStack(componentItem);
-            return true;
+            return AddItemByStack(componentItem);
         }
 
         public static bool AddToArmor(ComponentItem componentItem)
@@ -182,7 +283,7 @@ namespace Assets.Script.InventoryFolder
             obj.GetComponent<ArmorSlot>().Occupied = true;
             //přidání statů
             SlotManagement.AddRemoveStats(componentItem);
-            GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>().ArmorList.Add(componentItem);
+            _playerComponent.ArmorList.Add(componentItem);
             //skrytí info (nemusí být ale pak je prodleva než se to skryje)
             return true;
         }
@@ -210,7 +311,7 @@ namespace Assets.Script.InventoryFolder
             obj.GetComponent<ArmorSlot>().Occupied = true;
             //přidání statů
             SlotManagement.AddRemoveStats(componentItem);
-            GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>().ArmorList.Add(componentItem);
+            _playerComponent.ArmorList.Add(componentItem);
             //skrytí info (nemusí být ale pak je prodleva než se to skryje)
             return true;
         }
@@ -231,7 +332,7 @@ namespace Assets.Script.InventoryFolder
 
                     }
                 }
-                GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventoryList.Clear();
+                _componentInventory.InventoryList.Clear();
                 return true;
             }
             return false;
@@ -248,18 +349,10 @@ namespace Assets.Script.InventoryFolder
                         GameObject.Destroy(obj.gameObject);
                     }
                 }
-                GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventoryList.Clear();
+                _componentInventory.InventoryList.Clear();
                 return true;
             }
             return false;
-        }
-
-        public static bool AddToInventory(NewItem componentItem)
-        {
-            GameObject obj = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/Item"));
-            NewItem.SetStats(obj, componentItem);
-            AddItemByStack(obj.GetComponent<ComponentItem>());
-            return true;
         }
 
         public static void ShowStack(ComponentItem itemObj)
@@ -286,19 +379,19 @@ namespace Assets.Script.InventoryFolder
             else
             {
                 item.transform.parent.GetComponent<Slot>().Occupied = false;
-                GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventoryList.Remove(item);
+                _componentInventory.InventoryList.Remove(item);
                 GameObject.Destroy(item.gameObject);
             }
         }
 
         public static ComponentItem FindItemInInventory(int id)
         {
-            return GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventoryList.Find(s => s.ID == id);
+            return _componentInventory.InventoryList.Find(s => s.ID == id);
         }
 
         public static List<ComponentItem> FindAllItemInInventory(int id)
         {
-            return GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventoryList.FindAll(s => s.ID == id);
+            return _componentInventory.InventoryList.FindAll(s => s.ID == id);
         }
 
         public static bool StackOverflow(ComponentItem firstItem, ComponentItem secondItem)
@@ -325,8 +418,12 @@ namespace Assets.Script.InventoryFolder
         {
             if (item == null)
                 return;
-            if (item.Type == EType.Armour)
+            if (item.Type == EType.Armour || item.Type == EType.Weapon)
             {
+                if (item.Type == EType.Weapon)
+                {
+                    _playerComponent.Weapon = item.Subtype;
+                }
                 StatsChanged = true;
                 foreach (ItemStats itemStats in item.ItemStats)
                 {

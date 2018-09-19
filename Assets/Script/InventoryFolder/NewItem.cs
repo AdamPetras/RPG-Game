@@ -22,6 +22,15 @@ namespace Assets.Scripts.InventoryFolder
         Ammo
     }
 
+    public enum ERank
+    {
+        Common,
+        Uncommon,
+        Rare,
+        Epic,
+        None
+    }
+
     public enum ESubtype
     {
         None = 0,
@@ -73,6 +82,7 @@ namespace Assets.Scripts.InventoryFolder
         public EType Type { get; private set; }
         public ESubtype Subtype { get; private set; }
         public EProfession EProfession { get; private set; }
+        public ERank ERank { get; private set; }
         public List<ItemStats> ItemStats { get; private set; }
         public int Chance { get; private set; }
         public List<CraftItem> CraftItems { get; set; }
@@ -134,6 +144,10 @@ namespace Assets.Scripts.InventoryFolder
                 SellPrice = uint.Parse(itemDictionary["SellPrice"]);
             if (itemDictionary["MaximumStack"] != "")
                 MaximumStack = int.Parse(itemDictionary["MaximumStack"]);
+            if (itemDictionary["Rank"] != "")
+                ERank = (ERank)Enum.Parse(typeof(ERank), itemDictionary["Rank"], true);
+            else
+                ERank = ERank.None;
             ActualStack = 1;
         }
         public NewItem(NewItem item)
@@ -158,29 +172,32 @@ namespace Assets.Scripts.InventoryFolder
                 SellPrice = item.SellPrice;
                 ProfesionExperiences = item.ProfesionExperiences;
                 ProfesionLevelNeed = item.ProfesionLevelNeed;
+                ERank = item.ERank;
             }
         }
 
         public static void SetStats(GameObject obj, NewItem item)
         {
             obj.GetComponent<Image>().sprite = item.Icon;
-            obj.GetComponent<ComponentItem>().ID = item.ID;
-            obj.GetComponent<ComponentItem>().Icon = item.Icon;
-            obj.GetComponent<ComponentItem>().Name = item.Name;
-            obj.GetComponent<ComponentItem>().Type = item.Type;
-            obj.GetComponent<ComponentItem>().Subtype = item.Subtype;
-            obj.GetComponent<ComponentItem>().EProfession = item.EProfession;
-            obj.GetComponent<ComponentItem>().ItemStats = item.ItemStats;
-            obj.GetComponent<ComponentItem>().Chance = item.Chance;
-            obj.GetComponent<ComponentItem>().CraftItems = item.CraftItems;
-            obj.GetComponent<ComponentItem>().Quantity = item.Quantity;
-            obj.GetComponent<ComponentItem>().MaximumStack = item.MaximumStack;
-            obj.GetComponent<ComponentItem>().ActualStack = item.ActualStack;
-            obj.GetComponent<ComponentItem>().Loot = item.Loot;
-            obj.GetComponent<ComponentItem>().BuyPrice = item.BuyPrice;
-            obj.GetComponent<ComponentItem>().SellPrice = item.SellPrice;
-            obj.GetComponent<ComponentItem>().ProfesionExperiences = item.ProfesionExperiences;
-            obj.GetComponent<ComponentItem>().ProfesionLevelNeed = item.ProfesionLevelNeed;
+            ComponentItem objItem = obj.GetComponent<ComponentItem>();
+            objItem.ID = item.ID;
+            objItem.Icon = item.Icon;
+            objItem.Name = item.Name;
+            objItem.Type = item.Type;
+            objItem.Subtype = item.Subtype;
+            objItem.EProfession = item.EProfession;
+            objItem.ItemStats = item.ItemStats;
+            objItem.Chance = item.Chance;
+            objItem.CraftItems = item.CraftItems;
+            objItem.Quantity = item.Quantity;
+            objItem.ActualStack = item.ActualStack;
+            objItem.MaximumStack = item.MaximumStack;
+            objItem.Loot = item.Loot;
+            objItem.BuyPrice = item.BuyPrice;
+            objItem.SellPrice = item.SellPrice;
+            objItem.ProfesionExperiences = item.ProfesionExperiences;
+            objItem.ProfesionLevelNeed = item.ProfesionLevelNeed;
+            objItem.ERank = item.ERank;
         }
 
         public static NewItem IdToItem(int id)

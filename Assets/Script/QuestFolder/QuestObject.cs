@@ -43,8 +43,7 @@ namespace Assets.Script.QuestFolder
             foreach (ModifyQuest quest in Database.QuestDatabase)
             {
                 QuestSettings.AddQuest(new ModifyQuest(quest));
-            }
-            
+            }        
         }
 
         // Update is called once per frame

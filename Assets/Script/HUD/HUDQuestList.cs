@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
+using Assets.Script.Interaction;
+using Assets.Script.Menu;
 using Assets.Script.QuestFolder;
 using UnityEngine;
 using UnityEngine.UI;
@@ -43,7 +45,7 @@ namespace Assets.Script.HUD
             _backgroundTransform = _questListObject.transform.Find("Background");
             _viewPort = _backgroundTransform.Find("ScrollView").Find("Viewport");
             _exitButtTransform = _backgroundTransform.transform.Find("Exit");
-            _exitButtTransform.GetComponent<Button>().onClick.AddListener(OnExit);
+            _exitButtTransform.GetComponent<Button>().onClick.AddListener(OnHide);
             _exitButtText = _exitButtTransform.Find("Text").GetComponent<Text>();
             _backgroundTransform.transform.Find("Apply").gameObject.SetActive(false);
             _backgroundTransform.Find("DragPanel").Find("Text").GetComponent<Text>().text = "QuestList";
@@ -52,10 +54,9 @@ namespace Assets.Script.HUD
             _exitKeyTransform.GetComponent<Button>().onClick.AddListener(delegate
             {
                 OnBack();
-                OnExit();
+                OnHide();
             });
             _objects = new List<ButtonQuest>();
-            Utilities.ListOfAllObjects.Add(_questListObject);
             _questListObject.SetActive(false);
             Utilities.DisableOrEnableAll(_questListObject);
         }
@@ -69,14 +70,13 @@ namespace Assets.Script.HUD
 
             if (Input.GetKeyUp(KeyCode.U) && !_questListObject.activeSelf)
             {
-                _questListObject.SetActive(true);
-                Utilities.DisableOrEnableAll(_questListObject,true);
-                Visible = true;
+                OnVisible();
+                _backgroundTransform.transform.Find("Apply").gameObject.SetActive(false);
             }
             else if (Input.GetKeyUp(KeyCode.U) && _questListObject.activeSelf)
             {
                 OnBack();
-                OnExit();
+                OnHide();
             }
         }
 
@@ -156,6 +156,7 @@ namespace Assets.Script.HUD
                     }
                     break;
                 case EQuest.Kill:
+                    tmp += "kill " + quest.CurrentKills + "/" + quest.TotalKills + " " + quest.EnemyId;
                     break;
             }
             return tmp;
@@ -170,14 +171,28 @@ namespace Assets.Script.HUD
             _exitButtText.text = "Exit";
             DestroyObject(_questInfo);
             _exitButtTransform.GetComponent<Button>().onClick.RemoveAllListeners();
-            _exitButtTransform.GetComponent<Button>().onClick.AddListener(OnExit);
+            _exitButtTransform.GetComponent<Button>().onClick.AddListener(OnHide);
         }
 
-        private static void OnExit()
+        public static void OnHide()
         {
+            if (MainMenu.Visible || InGameTime.Visible)
+                return;
+            MainPanel.CloseWindow(_questListObject.name);
             Visible = false;
             _questListObject.SetActive(false);
             Utilities.DisableOrEnableAll(_questListObject);
+        }
+
+        public static void OnVisible()
+        {
+            if (MainMenu.Visible || InGameTime.Visible)
+                return;
+            _questListObject.transform.SetAsLastSibling();
+            MainPanel.OpenWindow(_questListObject.name);
+            _questListObject.SetActive(true);
+            Utilities.DisableOrEnableAll(_questListObject, true);
+            Visible = true;
         }
 
         public static void RemoveQuest(ModifyQuest quest)

@@ -15,12 +15,16 @@ namespace Assets.Script.QuestFolder
     public class QuestMasterSettings : QuestMaster
     {
         private PlayerComponent _playerComponent;
+        private Transform _qMark;
+        private Transform _exMark;
         public QuestMasterSettings(int id, string name, GameObject prefab, Vector3 position)
         {
             ID = id;
             Name = name;
             Prefab = prefab;
             Position = position;
+            _qMark = prefab.transform.Find("qMark");
+            _exMark = prefab.transform.Find("exMark");
         }
 
         public void FindPlayer(PlayerComponent pl)
@@ -39,17 +43,17 @@ namespace Assets.Script.QuestFolder
                     if (QuestList.Any(s => s.EQuestState == EQuestState.Complete))
                     {
                         SetMark(false, true, new Color32(118, 17, 17, 1));
-                        Mark = GameObject.Find(Name).transform.Find("qMark");
+                        Mark = _qMark;
                     }
                     else if (QuestList.Any(s => s.EQuestState == EQuestState.Progress))
                     {
                         SetMark(false, true, new Color32(73, 73, 73, 1));
-                        Mark = GameObject.Find(Name).transform.Find("qMark");
+                        Mark = _qMark;
                     }
                     else if (QuestList.Any(s => s.EQuestState == EQuestState.None && s.Level <= _playerComponent.Level))
                     {
                         SetMark(true, false, new Color32(118, 17, 17, 1));
-                        Mark = GameObject.Find(Name).transform.Find("exMark");
+                        Mark = _exMark;
                     }
                 }
                 else
@@ -69,9 +73,9 @@ namespace Assets.Script.QuestFolder
         }
         private void SetMark(bool exMark, bool qMark, Color32 material)
         {
-            GameObject.FindGameObjectsWithTag("QuestMaster").First(s => s.name == Name).transform.Find("qMark").GetComponent<MeshRenderer>().enabled = qMark;
-            GameObject.FindGameObjectsWithTag("QuestMaster").First(s => s.name == Name).transform.Find("exMark").GetComponent<MeshRenderer>().enabled = exMark;
-            GameObject.FindGameObjectsWithTag("QuestMaster").First(s => s.name == Name).transform.Find("qMark").GetComponent<Renderer>().material.color = material;
+            _qMark.GetComponent<MeshRenderer>().enabled = qMark;
+            _exMark.GetComponent<MeshRenderer>().enabled = exMark;
+            _qMark.GetComponent<Renderer>().material.color = material;
         }
 
         protected override void Submit(ModifyQuest quest)
@@ -84,7 +88,7 @@ namespace Assets.Script.QuestFolder
         {
             base.Reward(quest);
             _playerComponent.AddExp(quest.Experiences);
-            _playerComponent.Money += quest.MoneyReward;
+            SlotManagement.AddMoney(quest.MoneyReward);
             if (quest.ItemReward != null)
                 foreach (QuestItem Qitem in quest.ItemReward)
                 {
@@ -130,12 +134,13 @@ namespace Assets.Script.QuestFolder
                 ShowAvailable();
                 Talking = true;
                 QuestMasterObject.Visible = true;
+                if (Input.GetKeyUp(KeyCode.Escape) && QuestMasterObject.Visible)
+                    OnExit();
                 if (Vector3.Distance(Position, _playerComponent.gameObject.transform.position) > 2 ||
                     EQuestMasterState == EQuestMasterState.None) //pokud se vzdálí nebo ukončí řeč
                 {
                     OnExit();
                 }
-
             }
         }
 

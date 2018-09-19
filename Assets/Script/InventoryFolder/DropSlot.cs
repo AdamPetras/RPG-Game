@@ -9,7 +9,6 @@ namespace Assets.Script.InventoryFolder
     public class DropSlot : MonoBehaviour
     {
         private GameObject _obj;
-
         private void Awake()
         {
             _obj = gameObject;

@@ -31,7 +31,7 @@ namespace Assets.Script.SpellFolder
                 }
                 else if (transform.parent.GetComponent<SpellSlot>().IsBook)
                 {
-                    Debug.Log("newObj");
+                    //Debug.Log("newObj");
                     GameObject newObj = Instantiate(gameObject, _startParent);
                     newObj.name = "Spell";
                     newObj.GetComponent<ComponentSpell>().Spell = gameObject.GetComponent<ComponentSpell>().Spell;

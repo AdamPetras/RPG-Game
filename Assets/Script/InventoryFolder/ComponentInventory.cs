@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
+using Assets.Script.Interaction;
 using Assets.Script.InventoryFolder;
+using Assets.Script.Menu;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -40,11 +42,9 @@ namespace Assets.Scripts.InventoryFolder
                 _inventory.name = "Inventory";
                 _backgroundTransform = _inventory.transform.Find("Background");
                 new InventorySettings(_backgroundTransform);
-                //Debug.Log("inventory size " + InventorySettings.InventoryList.Count);
             }
             _inventory.SetActive(false);
             Utilities.DisableOrEnableAll(_inventory);
-            Debug.Log(InventorySlotList.Count);
         }
 
         // Update is called once per frame
@@ -52,15 +52,20 @@ namespace Assets.Scripts.InventoryFolder
         {
             if (_inventory == null)
                 return;
-            if (Input.GetKeyUp(KeyCode.I) && !_inventory.activeSelf)
+            if (!MainMenu.Visible && !InGameTime.Visible)
             {
-                _inventory.SetActive(true);
-                Utilities.DisableOrEnableAll(_inventory, true);
-            }
-            else if (Input.GetKeyUp(KeyCode.I) && _inventory.activeSelf)
-            {
-                _inventory.SetActive(false);
-                Utilities.DisableOrEnableAll(_inventory);
+                if (Input.GetKeyUp(KeyCode.I) && !_inventory.activeSelf)
+                {
+                    Visible = true;
+                    _inventory.SetActive(true);
+                    Utilities.DisableOrEnableAll(_inventory, true);
+                }
+                else if (Input.GetKeyUp(KeyCode.I) && _inventory.activeSelf)
+                {
+                    Visible = false;
+                    _inventory.SetActive(false);
+                    Utilities.DisableOrEnableAll(_inventory);
+                }
             }
         }
     }

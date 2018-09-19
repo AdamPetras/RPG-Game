@@ -7,6 +7,7 @@ using Assets.Script.CombatFolder;
 using Assets.Script.Enemy;
 using Assets.Script.Extension;
 using Assets.Script.HUD;
+using Assets.Script.InventoryFolder;
 using Assets.Script.StatisticsFolder;
 using Assets.Scripts.InventoryFolder;
 using Assets.Scripts.InventoryFolder.CraftFolder;
@@ -20,8 +21,9 @@ namespace Assets.Script.SpellFolder
         Buff,
         Damage,
         Passive,
+        Dot,
+        Weakness,
         None
-
     }
 
     public class Spell
@@ -30,14 +32,16 @@ namespace Assets.Script.SpellFolder
         public Sprite Icon { get; set; }
         public string Name { get; set; }
         public int LevelToAccess { get; set; }
-        public int GoldToAccess { get; set; }
+        public uint GoldToAccess { get; set; }
         public float ManaCost { get; set; }
         public float Range { get; set; }
         public float Cooldown { get; set; }
         public ESpell SpellType { get; set; }
         public float Duration { get; set; }
         public ESkill Skill { get; set; }
-        public float PercentageIncrease { get; set; }
+        public EVital Vital { get; set; }
+        public EDamageStats DamageStats { get; set; }
+        public float PercentageIncreaseDecrease { get; set; }
         public float PercentageDamage { get; set; }
         public float Timer { get; set; }
         public float CoolDownTimer { get; set; }
@@ -45,7 +49,10 @@ namespace Assets.Script.SpellFolder
         public string Description { get; set; }
         public bool CooldownEnable { get; set; }
         public float CastTime { get; set; }
-        private float _savedValue;
+        public GameObject PlantedObject { get; set; }
+        private float _deltaValueVital;
+        private float _deltaValueDamage;
+        private float _savedValue;      
         private GameObject _instantiateBuff;
         private GameObject dialog;
         public bool IWantToDestroy { get; set; }
@@ -56,7 +63,7 @@ namespace Assets.Script.SpellFolder
             Description = spell["Description"];
             Icon = Resources.Load<Sprite>("Graphics/Spell/" + Name);
             LevelToAccess = int.Parse(spell["LevelToAccess"]);
-            GoldToAccess = int.Parse(spell["GoldToAccess"]);
+            GoldToAccess = uint.Parse(spell["GoldToAccess"]);
             ManaCost = float.Parse(spell["ManaCost"]);
             Range = float.Parse(spell["Range"]);
             Cooldown = float.Parse(spell["Cooldown"]);
@@ -72,11 +79,20 @@ namespace Assets.Script.SpellFolder
                 Skill = (ESkill)Enum.Parse(typeof(ESkill), spell["Skill"], true);
             else
                 Skill = ESkill.None;
-            PercentageIncrease = float.Parse(spell["PercentageIncrease"]);
+            if (spell["Vital"] != "")
+                Vital = (EVital)Enum.Parse(typeof(EVital), spell["Vital"], true);
+            else
+                Vital = EVital.None;
+            if (spell["DamageStats"] != "")
+                DamageStats = (EDamageStats)Enum.Parse(typeof(EDamageStats), spell["DamageStats"], true);
+            else
+                DamageStats = EDamageStats.None;
+            PercentageIncreaseDecrease = float.Parse(spell["PercentageIncreaseDecrease"]);
             PercentageDamage = float.Parse(spell["PercentageDamage"]);
             CooldownEnable = true;
             CoolDownTimer = 0f;
             Unlocked = false;
+            PlantedObject = null;
         }
 
         public Spell(Spell spell)
@@ -92,12 +108,15 @@ namespace Assets.Script.SpellFolder
             SpellType = spell.SpellType;
             Skill = spell.Skill;
             Duration = spell.Duration;
-            PercentageIncrease = spell.PercentageIncrease;
+            PercentageIncreaseDecrease = spell.PercentageIncreaseDecrease;
             PercentageDamage = spell.PercentageDamage;
             Unlocked = spell.Unlocked;
             Description = spell.Description;
             CoolDownTimer = spell.CoolDownTimer;
             CooldownEnable = spell.CooldownEnable;
+            PlantedObject = spell.PlantedObject;
+            Vital = spell.Vital;
+            DamageStats = spell.DamageStats;
         }
 
         public static Spell IdToSpell(int id)
@@ -121,19 +140,19 @@ namespace Assets.Script.SpellFolder
             dialog = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/DialogWindow"));
             Transform bckg = dialog.transform.Find("Background");
             bckg.Find("Text").GetComponent<Text>().text = "Do you want to unlock this spell for " + GoldToAccess + " golds?";
-            bckg.Find("Yes").GetComponent<Button>().onClick.AddListener(delegate { OnYes(dialog, plComp, gameObject); });
+            bckg.Find("Yes").GetComponent<Button>().onClick.AddListener(delegate { OnYes(dialog); });
             bckg.Find("No").GetComponent<Button>().onClick.AddListener(delegate { GameObject.Destroy(dialog); });
         }
 
-        private void OnYes(GameObject dialog, PlayerComponent plComp, GameObject gameObject)
+        private void OnYes(GameObject dialog)
         {
 
-            if (GoldToAccess > plComp.Money)
+            if (!SlotManagement.AreTheseMoneyEnough(GoldToAccess))
             {
-                MyDebug.Log("Not enough money");
+                MyDebug.Log("Not enough money "+ GoldToAccess+ " you have got "+SlotManagement.MoneyPounch());
                 return;
             }
-            plComp.Money -= (uint)GoldToAccess;
+            SlotManagement.MoneyWithdraw(GoldToAccess);
             Unlocked = true;
             GameObject.Destroy(dialog);
         }
@@ -148,22 +167,9 @@ namespace Assets.Script.SpellFolder
             PlayerComponent playerComponent = obj.GetComponent<PlayerComponent>();
             if (SpellType == ESpell.Buff || SpellType == ESpell.Passive)
             {
-                float f = playerComponent.character.GetSkill((int)Skill).ValuesTogether;
-                f *= PercentageIncrease * 0.01f;
-                _savedValue = f - playerComponent.character.GetSkill((int)Skill).ValuesTogether;
-                playerComponent.character.GetSkill((int)Skill).BonusValue += _savedValue;
-                playerComponent.SpellList.Add(this);
-                playerComponent.character.UpdateStats();
-                _instantiateBuff = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/BuffItem"),
-                    playerComponent.BuffPanel);
-                _instantiateBuff.GetComponent<Image>().sprite = Icon;
-                if (SpellType == ESpell.Buff)
-                    _instantiateBuff.transform.Find("Text").GetComponent<Text>().text =
-                        (Duration - Timer).ToString();
-                CooldownEnable = false;
-                return true;
+                return WeakDotBuffAndPassive(obj, obj.GetComponent<PlayerComponent>().character, "Prefab/BuffItem");
             }
-            else
+            if(SpellType == ESpell.Damage)
             {
                 GameObject enemyObject = PlayerAttack.Interact;
                 if (enemyObject == null)
@@ -171,12 +177,80 @@ namespace Assets.Script.SpellFolder
                     MyDebug.Log("No target");
                     return false;
                 }
-                float damage = playerComponent.character.GetDamageStats((int)EDamageStats.SwordDamage).CurrentValue * (PercentageDamage * 0.01f);      //nastavení damagu
+                float damage = playerComponent.character.GetDamageStats((int)playerComponent.SelectWhichWeapon()).CurrentValue * (PercentageDamage * 0.01f);      //nastavení damagu
                 float block = enemyObject.GetComponent<EnemyStatistics>().EnemyCharacter.GetDamageStats((int)EDamageStats.DamageBlock).CurrentValue;    //nastavení bloku
-                enemyObject.GetComponent<EnemyStatistics>().EnemyCharacter.GetVital((int)EVital.Health).CurrentValue -= damage + Attack.DamageOscilation(damage) - block;
+                float damageDone = damage + Attack.DamageOscilation(damage) - block;
+                DamageHud.Hit(true,damageDone);
+                enemyObject.GetComponent<EnemyStatistics>().EnemyCharacter.GetVital((int)EVital.Health).CurrentValue -= damageDone;
+                if(enemyObject.GetComponent<EnemyStatistics>().EnemyCharacter.GetVital((int)EVital.Health).CurrentValue <=0)
+                    enemyObject.GetComponent<EnemyStatistics>().EnemyCharacter.ECharacterState = ECharacterState.Dead;
                 CooldownEnable = false;
                 return true;
             }
+            if (SpellType == ESpell.Weakness)
+            {
+                if (PlayerAttack.Interact != null)
+                    return WeakDotBuffAndPassive(PlayerAttack.Interact,
+                        PlayerAttack.Interact.GetComponent<EnemyStatistics>().EnemyCharacter, "Prefab/BuffItem");
+            }
+            if (SpellType == ESpell.Dot)
+            {
+                if (PlayerAttack.Interact != null)
+                    return WeakDotBuffAndPassive(PlayerAttack.Interact,
+                        PlayerAttack.Interact.GetComponent<EnemyStatistics>().EnemyCharacter, "Prefab/BuffItem");
+            }
+            return false;
+        }
+
+        private bool WeakDotBuffAndPassive(GameObject obj, Character playerOrEnemyCharacter, string wayToPrefab)
+        {
+            if (obj == null)
+            {
+                MyDebug.Log("No target");
+                return false;
+            }
+            float f;
+            if (SpellType == ESpell.Weakness)
+            {
+                if (Vital != EVital.None)
+                {
+                    playerOrEnemyCharacter.GetVital((int)Vital).CurrentValue -= Weakness(playerOrEnemyCharacter, playerOrEnemyCharacter.GetVital((int)Vital).CurrentValue, out _deltaValueVital);
+                }
+                if (DamageStats != EDamageStats.None)
+                {
+                    playerOrEnemyCharacter.GetDamageStats((int)DamageStats).CurrentValue -= Weakness(playerOrEnemyCharacter, playerOrEnemyCharacter.GetDamageStats((int)DamageStats).CurrentValue, out _deltaValueDamage);
+                }
+            }
+            else
+            {
+                f = playerOrEnemyCharacter.GetSkill((int) Skill).ValuesTogether;
+                _deltaValueVital = playerOrEnemyCharacter.GetSkill((int) Skill).BonusValue;
+                f *= PercentageIncreaseDecrease * 0.01f;
+                if (SpellType == ESpell.Buff)
+                    _savedValue = f - playerOrEnemyCharacter.GetSkill((int) Skill).ValuesTogether;
+                else if (SpellType == ESpell.Dot)
+                    _savedValue = 0;
+                playerOrEnemyCharacter.GetSkill((int) Skill).BonusValue += _savedValue;
+                _deltaValueVital -= playerOrEnemyCharacter.GetSkill((int) Skill).BonusValue;
+            }
+            playerOrEnemyCharacter.SpellList.Add(this);
+            playerOrEnemyCharacter.UpdateStats();
+            _instantiateBuff = GameObject.Instantiate(Resources.Load<GameObject>(wayToPrefab),
+                playerOrEnemyCharacter.BuffPanel);
+            _instantiateBuff.GetComponent<Image>().sprite = Icon;
+            if(SpellType == ESpell.Buff || SpellType == ESpell.Weakness|| SpellType == ESpell.Dot)
+                _instantiateBuff.transform.Find("Text").GetComponent<Text>().text = (Duration - Timer).ToString();
+            CooldownEnable = false;
+            PlantedObject = obj;
+            return true;
+        }
+
+        private float Weakness(Character playerOrEnemyCharacter, float skill,out float defaultValue)
+        {
+            float f = skill;
+            f *= PercentageIncreaseDecrease * 0.01f;
+            defaultValue = f;
+            return f;
         }
 
 
@@ -208,27 +282,60 @@ namespace Assets.Script.SpellFolder
             }
         }
 
-        public IEnumerator AnullBuff(float delay)
+        public IEnumerator AnullBuffDotOrWeakness(float delay)
         {
-            GameObject obj = GameObject.FindGameObjectWithTag("Player");
-            if (obj == null)
+            GameObject obj = null;
+            Character playerOrEnemyCharacter;
+            if (SpellType == ESpell.Buff)
+            {
+                obj = GameObject.FindGameObjectWithTag("Player");
+                if (obj == null)
+                    yield return null;
+                playerOrEnemyCharacter = obj.GetComponent<PlayerComponent>().character;
+            }
+            else if (SpellType == ESpell.Dot || SpellType == ESpell.Weakness)
+            {                                 
+                obj = GameObject.FindGameObjectWithTag("Player");
+                if (obj == null)
+                    yield return null;
+                if (PlantedObject == null)
+                    yield return null;
+                playerOrEnemyCharacter = PlantedObject.GetComponent<EnemyStatistics>().EnemyCharacter;
+            }
+            else
+            {
+                playerOrEnemyCharacter = null;
                 yield return null;
-            PlayerComponent playerComponent = obj.GetComponent<PlayerComponent>();
+            }
             while (true)
             {
                 yield return new WaitForSeconds(delay);
                 Timer += delay;
                 if (_instantiateBuff != null)
                     _instantiateBuff.transform.Find("Text").GetComponent<Text>().text = (Duration - Timer).ToString();
-                if (Timer >= Duration)
+                if (SpellType == ESpell.Dot)
+                {
+                    float damage = obj.GetComponent<PlayerComponent>().character.GetDamageStats((int)obj.GetComponent<PlayerComponent>().SelectWhichWeapon()).CurrentValue * (PercentageDamage * 0.01f);
+                    float damageDone = damage + Attack.DamageOscilation(damage);
+                    DamageHud.Hit(true, damageDone);
+                    playerOrEnemyCharacter.GetVital((int)EVital.Health).CurrentValue -= damageDone;
+                    if (playerOrEnemyCharacter.GetVital((int)EVital.Health).CurrentValue <= 0)
+                        playerOrEnemyCharacter.ECharacterState = ECharacterState.Dead;
+                }
+                if (Timer >= Duration || playerOrEnemyCharacter.ECharacterState == ECharacterState.Dead)
                 {
                     Timer = 0;
-                    float f = playerComponent.character.GetSkill((int)Skill).ValuesTogether;
-                    f *= 1 / (PercentageIncrease * 0.01f);
-                    _savedValue = playerComponent.character.GetSkill((int)Skill).ValuesTogether - f;
-                    playerComponent.character.GetSkill((int)Skill).BonusValue -= _savedValue;
-                    playerComponent.character.UpdateStats();
-                    playerComponent.SpellList.Remove(this);
+                    if(playerOrEnemyCharacter == null)
+                        yield return null;
+                    if(SpellType == ESpell.Buff)
+                        playerOrEnemyCharacter.GetSkill((int) Skill).BonusValue += _deltaValueVital;
+                    else if (SpellType == ESpell.Weakness)
+                    {
+                        playerOrEnemyCharacter.GetVital((int)Vital).CurrentValue += _deltaValueVital;
+                        playerOrEnemyCharacter.GetDamageStats((int)DamageStats).CurrentValue += _deltaValueDamage;
+                    }
+                    playerOrEnemyCharacter.UpdateStats();
+                    playerOrEnemyCharacter.SpellList.Remove(this);
                     GameObject.Destroy(_instantiateBuff);
                     yield break;
                 }

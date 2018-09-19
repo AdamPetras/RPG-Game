@@ -6,8 +6,10 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using Assets.Script.Camera;
+using Assets.Script.CombatFolder;
 using Assets.Script.Extension;
 using Assets.Script.HUD;
+using Assets.Script.Interaction;
 using Assets.Script.InventoryFolder;
 using Assets.Script.QuestFolder;
 using Assets.Script.StatisticsFolder;
@@ -134,6 +136,7 @@ namespace Assets.Script.CharacterFolder
         public SerializableVector3 CameraPosition;
         public SerializableQuaternion CameraRotation;
         public string PrefabName;
+        public InGameTime.MyTime InGameTime;
 
         public PlayerData()
         {
@@ -148,6 +151,12 @@ namespace Assets.Script.CharacterFolder
         public static EGameState GameState;
         public static string SavePosition;
         public const string PLAYERSPAWN = "PlayerSpawn";
+        private PlayerComponent _playerComponent;
+        private GameObject _playerGameObject;
+        private GameObject _gameMaster;
+        private InGameTime _inGameTime;
+        private ComponentInventory _componentInventory;
+        private GameObject _questGameObject;
         void Awake()
         {
 
@@ -157,12 +166,7 @@ namespace Assets.Script.CharacterFolder
         private void Start()
         {
             DontDestroyOnLoad(this);
-        }
-
-        // Update is called once per frame
-        private void Update()
-        {
-
+            LoadInstances();
         }
 
         public void DestroyAllGameObjects()
@@ -175,29 +179,81 @@ namespace Assets.Script.CharacterFolder
             }
         }
 
+        private void LoadInstances()
+        {
+            if (_gameMaster == null)
+            {
+                _gameMaster = GameObject.Find("GameMaster");
+            }
+            if (_componentInventory == null)
+            {
+                if (_gameMaster != null)
+                    _componentInventory = _gameMaster.GetComponent<ComponentInventory>();
+            }
+            if (_playerGameObject == null)
+            {
+                _playerGameObject = GameObject.FindGameObjectWithTag("Player");
+            }
+            if (_playerComponent == null)
+            {
+                if (_playerGameObject != null)
+                    _playerComponent = _playerGameObject.GetComponent<PlayerComponent>();
+            }
+            if (_questGameObject == null)
+            {
+                _questGameObject = GameObject.Find("Quest");
+            }
+            if (_inGameTime == null)
+            {
+                if(GameObject.Find("Graphics") != null)
+                    _inGameTime = GameObject.Find("Graphics").GetComponentInChildren<InGameTime>();
+            }
+        }
+
         public void SaveCharacter(string save = "Default")
         {
-            GameObject Player = GameObject.FindGameObjectWithTag("Player");
-            PlayerComponent playerComponent = Player.GetComponent<PlayerComponent>();
+            LoadInstances();
+            if (_playerGameObject == null)
+            {
+                _playerGameObject = GameObject.FindGameObjectWithTag("Player");
+            }
+            if (_playerComponent == null)
+            {
+                if (_playerGameObject != null)
+                    _playerComponent = _playerGameObject.GetComponent<PlayerComponent>();
+            }
+            if (_playerComponent == null)
+            {
+                MyDebug.LogError("I cant save this game");
+                return;
+            }
+            Debug.Log(_playerComponent);
             BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Create(Application.persistentDataPath + "/" + save + ".save");
             PlayerData data = new PlayerData();
-            data.PrefabName = playerComponent.Prefab.name;
-            data.Name = playerComponent.Name;
-            data.ExpCurrent = playerComponent.ExpCurrent;
-            data.ExpMultiplier = playerComponent.ExpMultiplier;
-            data.ExpToNextLevel = playerComponent.ExpToNextLevel;
-            data.Level = playerComponent.Level;
-            data.Money = playerComponent.Money;
-            data.ProfessionList = playerComponent.ProfessionList;
-            data.SkillArray = playerComponent.character.skillArray;
-            data.VitalArray = playerComponent.character.vitalArray;
-            data.DamageStatsArray = playerComponent.character.damageStatsArray;
+            data.PrefabName = _playerComponent.Prefab.name;
+            data.Name = _playerComponent.Name;
+            data.ExpCurrent = _playerComponent.ExpCurrent;
+            data.ExpMultiplier = _playerComponent.ExpMultiplier;
+            data.ExpToNextLevel = _playerComponent.ExpToNextLevel;
+            data.Level = _playerComponent.Level;
+            data.ProfessionList = _playerComponent.ProfessionList;
+            data.SkillArray = _playerComponent.character.skillArray;
+            data.VitalArray = _playerComponent.character.vitalArray;
+            data.DamageStatsArray = _playerComponent.character.damageStatsArray;
             data.Time = DateTime.Now;
-            data.PlayerPosition = new SerializableVector3(Player.transform.position);
+            if(_inGameTime != null)
+                data.InGameTime = _inGameTime.GetActualTime();
+            data.PlayerPosition = new SerializableVector3(_playerGameObject.transform.position);
             //data.PlayerRotation = new SerializableQuaternion(Player.transform.rotation);
-            if (!SaveQuest(data, playerComponent) || !SaveInventory(data) || !SaveCamera(data))
+            if (!SaveQuest(data, _playerComponent) || !SaveInventory(data) || !SaveCamera(data))
             {
+                if (save == "Default")
+                {
+                    bf.Serialize(file, data);
+                    file.Close();
+                    return;
+                }
                 MyDebug.LogError("I cant save this game");
                 file.Close();
                 return;
@@ -232,6 +288,7 @@ namespace Assets.Script.CharacterFolder
         {
             if (File.Exists(Application.persistentDataPath + "/" + save + ".save"))
             {
+                LoadInstances();
                 BinaryFormatter bf = new BinaryFormatter();
                 FileStream file = File.Open(Application.persistentDataPath + "/" + save + ".save", FileMode.Open);
                 PlayerData data;
@@ -245,32 +302,48 @@ namespace Assets.Script.CharacterFolder
                     return;
                 }
                 file.Close();
-                GameObject player = GameObject.FindGameObjectWithTag("Player");
-                if (player != null)
+                if (_playerGameObject == null)
                 {
+                    _playerGameObject = GameObject.FindGameObjectWithTag("Player");
+                }
+                if (_playerComponent == null)
+                {
+                    if (_playerGameObject != null)
+                        _playerComponent = _playerGameObject.GetComponent<PlayerComponent>();
+                }
+                if (_playerGameObject != null)
+                {
+                    if (_playerComponent.character.ECharacterState == ECharacterState.Dead)
+                    {
+                        _playerComponent.character.ECharacterState = ECharacterState.Alive;
+                        _playerGameObject.GetComponent<ThirdPersonCamera>().enabled = true;
+                        _playerGameObject.GetComponent<AttackAI>().enabled = true;
+                        _playerGameObject.GetComponent<CharacterController>().enabled = true;
+                        UnityEngine.Camera.main.GetComponent<MyCamera>().enabled = true;
+                        _playerGameObject.GetComponent<PlayerComponent>().enabled = true;
+                    }
                     if (GameState == EGameState.InGameLoad)
                     {
-                        player.transform.position = data.PlayerPosition.GetVector3();
+                        _playerGameObject.transform.position = data.PlayerPosition.GetVector3();
                         //player.transform.rotation = data.PlayerRotation.GetQuaternion();
                     }
-                    PlayerComponent playerComponent = player.GetComponent<PlayerComponent>();
-                    playerComponent.Name = data.Name;
-                    playerComponent.name = data.Name;
-                    playerComponent.AddExp(data.ExpCurrent, true);
-                    playerComponent.ExpMultiplier = data.ExpMultiplier;
-                    playerComponent.ExpToNextLevel = data.ExpToNextLevel;
-                    playerComponent.SavedPosition = data.PlayerPosition.GetVector3();
+                    _playerComponent.Name = data.Name;
+                    _playerComponent.name = data.Name;
+                    _playerComponent.AddExp(data.ExpCurrent, true);
+                    _playerComponent.ExpMultiplier = data.ExpMultiplier;
+                    _playerComponent.ExpToNextLevel = data.ExpToNextLevel;
+                    _playerComponent.SavedPosition = data.PlayerPosition.GetVector3();
                     //playerComponent.SavedRotation = data.PlayerRotation.GetQuaternion();
-                    playerComponent.Level = data.Level;
-                    playerComponent.Money = data.Money;
-                    playerComponent.ProfessionList = data.ProfessionList;
-                    playerComponent.character.skillArray = data.SkillArray;
-                    playerComponent.character.damageStatsArray = data.DamageStatsArray;
-                    playerComponent.character.vitalArray = data.VitalArray;
-                    playerComponent.QuestList.Clear();
-                    LoadQuest(data, playerComponent);
+                    _playerComponent.Level = data.Level;
+                    _playerComponent.ProfessionList = data.ProfessionList;
+                    _playerComponent.character.skillArray = data.SkillArray;
+                    _playerComponent.character.damageStatsArray = data.DamageStatsArray;
+                    _playerComponent.character.vitalArray = data.VitalArray;
+                    _playerComponent.QuestList.Clear();
+                    LoadQuest(data, _playerComponent);
                     LoadInventory(data);
                     LoadCamera(data);
+                    LoadTime(data);
                 }
                 else
                 {
@@ -300,29 +373,31 @@ namespace Assets.Script.CharacterFolder
 
         private bool SaveInventory(PlayerData data)
         {
-            if (GameObject.Find("GameMaster") != null)
-                foreach (ComponentItem item in GameObject.Find("GameMaster").GetComponent<ComponentInventory>()
-                    .InventoryList.Where(s => s != null))
+            if (_gameMaster != null)
+            {
+                foreach (ComponentItem item in _componentInventory.InventoryList.Where(s => s != null))
                 {
                     data.InventoryList.Add(new ItemSave(item.ID, item.ActualStack, false));
                 }
+            } 
             else return false;
-            if (GameObject.FindGameObjectWithTag("Player") != null)
-                foreach (ComponentItem item in GameObject.FindGameObjectWithTag("Player")
-                    .GetComponent<PlayerComponent>().ArmorList.Where(s => s != null))
+            if (_playerGameObject != null)
+            {
+                foreach (ComponentItem item in _playerComponent.ArmorList.Where(s => s != null))
                 {
                     data.InventoryList.Add(new ItemSave(item.ID, item.ActualStack, true));
                 }
+            }
             else return false;
             return true;
         }
 
         private void LoadInventory(PlayerData data)
         {
-            if (GameObject.Find("GameMaster") != null)
-                SlotManagement.ClearList(GameObject.Find("GameMaster").GetComponent<ComponentInventory>().InventoryList);
-            if (GameObject.FindGameObjectWithTag("Player") != null)
-                SlotManagement.ClearList(GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>().ArmorList);
+            if (_gameMaster != null)
+                SlotManagement.ClearList(_componentInventory.InventoryList);
+            if (_playerComponent != null)
+                SlotManagement.ClearList(_playerComponent.ArmorList);
             foreach (ItemSave item in data.InventoryList)
             {
                 Debug.Log(item.Id);
@@ -346,12 +421,12 @@ namespace Assets.Script.CharacterFolder
                 }
             else return false;
             if (QuestMasterGenerate.QuestMasterList != null)
-                foreach (ObjectGenerate questMaster in QuestMasterGenerate.QuestMasterList)
+                foreach (QuestMasterObject questMaster in QuestMasterGenerate.QuestMasterList)
                 {
                     if (GameObject.FindGameObjectsWithTag("QuestMaster").Length > 0)
                         if (GameObject.FindGameObjectsWithTag("QuestMaster").First(s => s.name == questMaster.Name) != null)
                             foreach (ModifyQuest quest in GameObject.FindGameObjectsWithTag("QuestMaster")
-                                .First(s => s.name == questMaster.Name).GetComponent<QuestMasterObject>().QuestMaster
+                                .First(s => s.name == questMaster.Name).GetComponent<QuestMasterObject>().ThisQuestMaster
                                 .QuestList)
                             {
                                 data.UnAssignedQuestList.Add(new QuestSave(quest.QuestID, quest.QuestMasterAsign,
@@ -366,11 +441,17 @@ namespace Assets.Script.CharacterFolder
 
         private void LoadQuest(PlayerData data, PlayerComponent playerComponent)
         {
-            if (GameState == EGameState.MenuLoad)
-                if (GameObject.Find("Quest") != null)
+            if (GameState == EGameState.InGameLoad || GameState == EGameState.MenuLoad)
+            {
+                foreach (QuestMasterObject obj in QuestMasterGenerate.QuestMasterList)
                 {
-                    GameObject.Find("Quest").GetComponent<QuestObject>().QuestList.Clear();
+                    obj.ThisQuestMaster.QuestList.Clear();
                 }
+                if (_questGameObject != null)
+                {
+                    _questGameObject.GetComponent<QuestObject>().QuestList.Clear();
+                }
+            }
             foreach (QuestSave quest in data.CollectedQuestList)
             {
                 ModifyQuest q = new ModifyQuest(Quest.IdToQuest(quest.Id));
@@ -385,22 +466,24 @@ namespace Assets.Script.CharacterFolder
                     data.UnAssignedQuestList.RemoveAll(s => s.Id == q.QuestID);
                 }
             }
-            GameObject[] gameObjects = GameObject.FindGameObjectsWithTag("QuestMaster");
-            foreach (GameObject gameObject in gameObjects)
+            foreach (QuestSave quest in data.UnAssignedQuestList)
             {
-                gameObject.GetComponent<QuestMasterObject>().QuestMaster.QuestList.Clear();
-            }
-            foreach (QuestSave quest in data.UnAssignedQuestList/*.Where(s => !data.CollectedQuestList.Exists(a => a.Id == s.Id))*/)
-            {
-                if (GameObject.Find("Quest") != null)
+                if (_questGameObject != null)
                 {
-                    GameObject.Find("Quest").GetComponent<QuestObject>().QuestList.Add(new ModifyQuest(Quest.IdToQuest(quest.Id)));
+                    _questGameObject.GetComponent<QuestObject>().QuestList.Add(new ModifyQuest(Quest.IdToQuest(quest.Id)));
                 }
             }
-            foreach (GameObject gameObject in gameObjects)
-            {
-                gameObject.GetComponent<QuestMasterObject>().AddQuestToQuestMaster();
+            foreach (QuestMasterObject obj in QuestMasterGenerate.QuestMasterList)
+            {               
+                obj.AddQuestToQuestMaster();
             }
         }
+
+        private void LoadTime(PlayerData data)
+        {
+            if(data.InGameTime != null)
+                _inGameTime.SetActualTime(data.InGameTime);
+        }
+
     }
 }

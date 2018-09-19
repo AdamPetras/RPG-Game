@@ -1,63 +1,28 @@
 ﻿using System;
-using System.Threading;
-using Assets.Script.CharacterFolder;
-using Assets.Script.StatisticsFolder;
-using Assets.Script.TargetFolder;
+using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
+using UnityEngine.UI;
 
 namespace Assets.Script.HUD
 {
-    public class DamageHud
+    public class DamageHud : MonoBehaviour
     {
-        private Vector2 positionBeforePl;
-        private float damagebefore;
-        private Font font;
-        private int _fontSize;
-        private Color _color;
-        private bool _isPlayer;
-        private GUIStyle _guiStyleOne;
-        public DamageHud(Color color, int fontSize, bool isPlayer)
+        private static readonly List<GameObject> Signs = new List<GameObject>();
+        private static Transform Background;
+
+        private void Start()
         {
-            font = Resources.Load<Font>("Graphics/Fonts/RaviPrakash");
-            _color = color;
-            _fontSize = fontSize;
-            _isPlayer = isPlayer;
-            _guiStyleOne = new GUIStyle();
-            _guiStyleOne.fontSize = _fontSize;
-            _guiStyleOne.font = font;
-            _guiStyleOne.normal.textColor = _color;
+            Background = gameObject.transform.GetChild(0);
         }
 
-       /* public void OnGUI(float damage, bool isCrit)
+        public static void Hit(bool isPlayer, float damageDone)
         {
-
-            positionBeforePl = SetPositionPlayerHud(damage);
-            damagebefore = damage;
-            string text = "";
-            if (!_isPlayer)
-                text += "-";
-            if (isCrit)
-            {
-                _guiStyleOne.fontSize = _fontSize + 10;
-                text += Math.Round(damage, 0) + "Critical!!";
-            }
-            else
-            {
-                _guiStyleOne.fontSize = _fontSize;
-                text += Math.Round(damage, 0).ToString();
-            }
-            GUI.Label(new Rect(positionBeforePl.x, positionBeforePl.y, 100, 50), text, _guiStyleOne);
-        }*/
-
-        private Vector2 SetPositionPlayerHud(float damage)
-        {
-            if (damagebefore != damage && damage != 0)
-            {
-                return new Vector2(Random.Range(Screen.width / 2 - 75, Screen.width / 2 + 75),
-                    Random.Range(Screen.height / 2 - 75, Screen.height / 2 + 75));
-            }
-            return positionBeforePl;
+            GameObject obj;
+            if (isPlayer)
+               obj = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/PlayerHit"), Background);
+            else obj = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/EnemyHit"), Background);
+            obj.GetComponent<Text>().text = Math.Round(damageDone, 1).ToString();
+            Signs.Add(obj);
         }
     }
 }

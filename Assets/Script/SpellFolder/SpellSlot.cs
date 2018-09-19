@@ -32,7 +32,6 @@ namespace Assets.Script.SpellFolder
                 if (_obj.transform.Find("Spell") != null)
                 {
                     _obj.transform.Find("Spell").GetComponent<Button>().onClick.Invoke();
-                    Debug.Log(keyCode);
                 }
             }
         }
@@ -71,7 +70,7 @@ namespace Assets.Script.SpellFolder
         {
             if (_obj != null && SpellDragAndDrop.SpellDraged != null && !IsBook)
             {
-                Debug.Log("drop");
+                //Debug.Log("drop");
                 if (Occupied)
                 {
                     if (_obj.transform.GetChild(0).GetComponent<ComponentSpell>().Spell.CooldownEnable)

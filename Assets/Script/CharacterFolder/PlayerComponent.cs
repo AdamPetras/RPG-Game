@@ -3,12 +3,14 @@ using Assets.Script.Camera;
 using Assets.Script.CombatFolder;
 using Assets.Script.Enemy;
 using Assets.Script.InventoryFolder;
+using Assets.Script.Menu;
 using Assets.Script.QuestFolder;
 using Assets.Script.SpellFolder;
 using Assets.Script.StatisticsFolder;
 using Assets.Script.TargetFolder;
 using Assets.Scripts.InventoryFolder;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Assets.Script.CharacterFolder
 {
@@ -29,24 +31,23 @@ namespace Assets.Script.CharacterFolder
         public int Level { get; set; }
         public string Name { get; set; }
         public bool Created { get; set; }
-        public uint Money { get; set; }
         public Vector3 SavedPosition { get; set; }
         public Quaternion SavedRotation { get; set; }
+        public ESubtype Weapon { private get; set; }
         public Character character;
         public List<ModifyQuest> QuestList;
         public List<Profession> ProfessionList;
-        public List<ComponentItem> ArmorList;
-        public List<Spell> SpellList;
+        public List<ComponentItem> ArmorList;        
         private bool _sendFirstBroadcast;
         public static bool ExperiencesPooling;
         public GameObject Prefab;
-        private GameObject _buffObj;
-        public Transform BuffPanel;
+        
+        private ThirdPersonCamera _tps;
+        private bool _energyRegen;
         private void Awake()
         {
             ArmorList = new List<ComponentItem>();
-            character = new Character();
-            SpellList = new List<Spell>();
+            character = new Character();          
             QuestList = new List<ModifyQuest>();
             ProfessionList = new List<Profession>();
             ProfessionList.Add(new Profession(EProfession.Cooking));
@@ -57,25 +58,28 @@ namespace Assets.Script.CharacterFolder
             ExpCurrent = 200;
             ExpToNextLevel = 200;
             TotalExp = 0;
-            Money = 0;
             ExpMultiplier = 1.2f;
             Level = 0;
             Created = false;
             _sendFirstBroadcast = false;
-            _buffObj = Instantiate(Resources.Load<GameObject>("Prefab/BuffPanel"));
-            _buffObj.name = "BuffPanel";
-            BuffPanel = _buffObj.transform.Find("Background");
+            character.BuffObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/BuffPanel"));
+            character.BuffObj.name = "BuffPanel";
+            character.BuffPanel = character.BuffObj.transform.Find("Background");
+            _tps = GetComponent<ThirdPersonCamera>();
+            _energyRegen = true;
         }
 
         private void Start()
         {
             Name = name;
+            gameObject.transform.Find("PlayerTargetPrefab").Find("Background").Find("Name").GetComponent<Text>().text = Name;
             LevelUp();
+            BlackScreen.EndPrint();
         }
 
         public void LevelUp()
         {
-            if (ExpCurrent >= ExpToNextLevel)
+            while (ExpCurrent >= ExpToNextLevel)
             {
                 TotalExp += ExpCurrent;         //přičtení total exp
                 ExpCurrent -= ExpToNextLevel;   //přetečení expů
@@ -91,18 +95,55 @@ namespace Assets.Script.CharacterFolder
             return (uint)(ExpToNextLevel * ExpMultiplier);
         }
 
+        public void RegeneratingEnergy()
+        {
+            if (character.GetVital((int) EVital.Energy).CurrentValue < character.GetVital((int) EVital.Energy).MaxValue)
+                character.GetVital((int) EVital.Energy).CurrentValue ++;
+            if(character.GetVital((int)EVital.Energy).CurrentValue > character.GetVital((int)EVital.Energy).MaxValue)
+            {
+                character.GetVital((int) EVital.Energy).CurrentValue = character.GetVital((int) EVital.Energy).MaxValue;
+                CancelInvoke("RegeneratingEnergy");
+            }
+            _tps.canIRun = true;
+        }
+
+
+        public void Run()
+        {
+            character.GetVital((int)EVital.Energy).CurrentValue -= 0.1f;
+            if (character.GetVital((int)EVital.Energy).CurrentValue <= 0)
+            {
+                character.GetVital((int)EVital.Energy).CurrentValue = 0;
+                _tps.canIRun = false;
+            }
+        }
+
         void Update()
         {
             character.HealthRegen();
+            if (_tps.isWalking == false && _tps.swimming == false&& Created)
+            {
+                _energyRegen = true;
+                Run();
+                CancelInvoke("RegeneratingEnergy");
+            }
+            else if(_energyRegen)
+            {
+                _energyRegen = false;
+                InvokeRepeating("RegeneratingEnergy",5,0.5f);
+            }
             if (character.ECharacterState == ECharacterState.Dead)
             {
+                MainMenu menu = GameObject.Find("Graphics").transform.Find("Menu").GetComponent<MainMenu>();
+                menu.OnVisible();
+                menu.CouldBeExited = false;
                 Debug.Log("Dead");
                 character.GetVital((int)EVital.Health).CurrentValue = 0;
-                GameObject.FindGameObjectWithTag("Player").GetComponent<ThirdPersonCamera>().enabled = false;
-                GameObject.FindGameObjectWithTag("Player").GetComponent<AttackAI>().enabled = false;
-                GameObject.FindGameObjectWithTag("Player").GetComponent<CharacterController>().enabled = false;
-                GameObject.FindGameObjectWithTag("MainCamera").GetComponent<MyCamera>().enabled = false;
-                GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>().enabled = false;
+                GetComponent<ThirdPersonCamera>().enabled = false;
+                GetComponent<AttackAI>().enabled = false;
+                GetComponent<CharacterController>().enabled = false;
+                UnityEngine.Camera.main.GetComponent<MyCamera>().enabled = false;
+                GetComponent<PlayerComponent>().enabled = false;
             }
         }
 
@@ -118,6 +159,21 @@ namespace Assets.Script.CharacterFolder
             ExpCurrent += exp;
             LevelUp();
             ExperiencesPooling = true;
+        }
+
+        public EDamageStats SelectWhichWeapon()
+        {
+            switch (Weapon)
+            {
+                    case ESubtype.Axe:
+                    return EDamageStats.AxeDamage;
+                    case ESubtype.Bow: return  EDamageStats.RangedPower;
+                    case ESubtype.Knife: return  EDamageStats.SwordDamage;
+                    case ESubtype.Sword: return  EDamageStats.SwordDamage;
+                    case ESubtype.Spear: return EDamageStats.MaceDamage;
+                    case ESubtype.None: return  EDamageStats.SwordDamage;
+            }
+            return EDamageStats.SwordDamage;
         }
     }
 }

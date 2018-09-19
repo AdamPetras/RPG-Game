@@ -9,30 +9,37 @@ namespace Assets.Script.QuestFolder
 {
     public class QuestMasterObject : MonoBehaviour
     {
-        public QuestMasterSettings QuestMaster;
+        public QuestMasterSettings ThisQuestMaster;
         private PlayerComponent _playerComponent;
-        public EGenerateState EGenerateState;
         public static bool Visible;
         public static bool CanIDeactive = true;
+        public int Id;
+        public string Name;
         public int Health;
         public int Mana;
         public int Level;
-        private ObjectGenerate _objectGenerate;
-
-        private static bool _saveLoadOnceCall;
+       // public int[] ListOfQuest;
+        //private ObjectGenerate _objectGenerate;
+        //private static bool _saveLoadOnceCall;
         // Use this for initialization
         void Start()
         {
-            _objectGenerate = QuestMasterGenerate.QuestMasterList.Find(s => s.Name == name);
-            QuestMaster = new QuestMasterSettings(_objectGenerate.Id, _objectGenerate.Name, _objectGenerate.Prefab, _objectGenerate.Position);
+            //_objectGenerate = QuestMasterGenerate.QuestMasterList.Find(s => s.Name == name);        
+            gameObject.name = Name;
+            ThisQuestMaster = new QuestMasterSettings(Id, Name, gameObject, transform.position);
+            QuestMasterGenerate.QuestMasterList.Add(this);
+            /*for (int i = 0; i < ListOfQuest.Length; i++)
+            {
+                if (ThisQuestMaster.QuestList.Any(s => s.QuestID != ListOfQuest[i]) || ThisQuestMaster.QuestList.Count == 0)
+                    ThisQuestMaster.QuestList.Add(new ModifyQuest(Quest.IdToQuest(ListOfQuest[i])));
+            }*/
             if (_playerComponent == null)
             {
                 _playerComponent = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>();
-                QuestMaster.FindPlayer(_playerComponent);
+                ThisQuestMaster.FindPlayer(_playerComponent);
             }
-            AddQuestToQuestMaster();
-            StartCoroutine(QuestMaster.CheckMarks());
-            StartCoroutine(QuestMaster.MarkRotate());
+            StartCoroutine(ThisQuestMaster.CheckMarks());
+            StartCoroutine(ThisQuestMaster.MarkRotate());
         }
 
         // Update is called once per frame
@@ -41,11 +48,11 @@ namespace Assets.Script.QuestFolder
             if (_playerComponent == null)
             {
                 _playerComponent = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>();
-                QuestMaster.FindPlayer(_playerComponent);
+                ThisQuestMaster.FindPlayer(_playerComponent);
             }
-            if (QuestMaster != null && _playerComponent != null)
-            {                
-                QuestMaster.IfNear();
+            if (ThisQuestMaster != null && _playerComponent != null)
+            {
+                ThisQuestMaster.IfNear();
             }
         }
 
@@ -57,51 +64,47 @@ namespace Assets.Script.QuestFolder
                 obj = GameObject.Find("Quest").GetComponent<QuestObject>();
             }
             if (obj != null)
-            {
+            {               
                 foreach (ModifyQuest quest in obj.QuestList.ToList().Where(s => s.EQuestState == EQuestState.None))
-                {
-                    if (QuestMaster.ID == quest.QuestMasterAsign)
+                {        
+                    if (ThisQuestMaster.ID == quest.QuestMasterAsign)
                     {
-                        if (!QuestMaster.QuestList.Contains(quest))
+                        if (!ThisQuestMaster.QuestList.Contains(quest))
                         {
                             obj.QuestList.Remove(obj.QuestList.Find(s => s.QuestID == quest.QuestID));
-                            QuestMaster.QuestList.Add(quest);
+                            ThisQuestMaster.QuestList.Add(quest);
                         }
                     }
                 }
             }
             foreach (ModifyQuest quest in _playerComponent.QuestList.Where(s => s.EQuestState == EQuestState.Complete))
             {
-                if (QuestMaster.ID == quest.QuestMasterSubmit)
+                if (ThisQuestMaster.ID == quest.QuestMasterSubmit)
                 {
-                    if (!QuestMaster.QuestList.Contains(quest))
+                    if (!ThisQuestMaster.QuestList.Contains(quest))
                     {
-                        QuestMaster.QuestList.Add(quest);
+                        ThisQuestMaster.QuestList.Add(quest);
                     }
                 }
             }
             foreach (ModifyQuest quest in _playerComponent.QuestList.Where(s => s.EQuestState == EQuestState.Progress))
             {
                 if (quest.EQuest == EQuest.Talk)
-                    if (quest.QuestMasterList.Any(a => a == QuestMaster.ID))
+                    if (quest.QuestMasterList.Any(a => a == ThisQuestMaster.ID))
                     {
-                        if (!QuestMaster.QuestList.Contains(quest))
-                            QuestMaster.QuestList.Add(quest);
+                        if (!ThisQuestMaster.QuestList.Contains(quest))
+                            ThisQuestMaster.QuestList.Add(quest);
                     }
                     else { }
-                else if (quest.EQuest == EQuest.Delivery)
+                else if (quest.EQuest == EQuest.Delivery || quest.EQuest == EQuest.Kill)
                 {
-                    if (QuestMaster.ID == quest.QuestMasterSubmit)
+                    if (ThisQuestMaster.ID == quest.QuestMasterSubmit)
                     {
-                        if (!QuestMaster.QuestList.Contains(quest))
+                        if (!ThisQuestMaster.QuestList.Contains(quest))
                         {
-                            QuestMaster.QuestList.Add(quest);
+                            ThisQuestMaster.QuestList.Add(quest);
                         }
                     }
-                }
-                else if (quest.EQuest == EQuest.Kill)
-                {
-
                 }
             }
         }
