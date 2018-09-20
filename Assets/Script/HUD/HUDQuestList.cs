@@ -2,6 +2,7 @@
 using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
 using Assets.Script.Interaction;
+using Assets.Script.InventoryFolder.CraftFolder;
 using Assets.Script.Menu;
 using Assets.Script.QuestFolder;
 using UnityEngine;
@@ -68,12 +69,12 @@ namespace Assets.Script.HUD
                 _playerComponent = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>();
             }
 
-            if (Input.GetKeyUp(KeyCode.U) && !_questListObject.activeSelf)
+            if (Input.GetKeyUp(KeyCode.U) && !_questListObject.activeSelf && !CraftSettings.SearchFocused)
             {
                 OnVisible();
                 _backgroundTransform.transform.Find("Apply").gameObject.SetActive(false);
             }
-            else if (Input.GetKeyUp(KeyCode.U) && _questListObject.activeSelf)
+            else if (Input.GetKeyUp(KeyCode.U) && _questListObject.activeSelf && !CraftSettings.SearchFocused)
             {
                 OnBack();
                 OnHide();

@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 
 namespace Assets.Script.Extension
 {
-    public class DragAndDropWindow : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class DragAndDropWindow : MonoBehaviour,IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         private Vector3 _offset;
         private Rect _rect;
@@ -44,6 +44,11 @@ namespace Assets.Script.Extension
                 if (gameObject.transform.parent.GetChild(i) != transform)
                     gameObject.transform.parent.GetChild(i).gameObject.SetActive(true);
             }
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            transform.parent.parent.transform.SetAsLastSibling();
         }
     }
 }

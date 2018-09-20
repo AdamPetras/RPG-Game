@@ -2,6 +2,7 @@
 using Assets.Script.Extension;
 using Assets.Script.Interaction;
 using Assets.Script.InventoryFolder;
+using Assets.Script.InventoryFolder.CraftFolder;
 using Assets.Script.Menu;
 using Assets.Script.QuestFolder;
 using Assets.Script.StatisticsFolder;
@@ -80,11 +81,11 @@ namespace Assets.Script.HUD
                     Initialize();
                 }
             }            
-            if (Input.GetKeyUp(KeyCode.C) && !Visible)
+            if (Input.GetKeyUp(KeyCode.C) && !Visible && !CraftSettings.SearchFocused)
             {
                 OnVisible();
             }
-            else if (Input.GetKeyUp(KeyCode.C) && Visible)
+            else if (Input.GetKeyUp(KeyCode.C) && Visible && !CraftSettings.SearchFocused)
             {
                 OnHide();
             }

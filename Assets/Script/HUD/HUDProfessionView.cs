@@ -1,6 +1,7 @@
 ﻿using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
 using Assets.Script.Interaction;
+using Assets.Script.InventoryFolder.CraftFolder;
 using Assets.Script.Menu;
 using Assets.Scripts.InventoryFolder;
 using Assets.Scripts.InventoryFolder.CraftFolder;
@@ -46,11 +47,11 @@ namespace Assets.Script.HUD
 
         private void Update()
         {
-            if (Input.GetKeyUp(KeyCode.B) && !_skillView.activeSelf)
+            if (Input.GetKeyUp(KeyCode.B) && !_skillView.activeSelf && !CraftSettings.SearchFocused)
             {
                 OnVisible();
             }
-            else if (Input.GetKeyUp(KeyCode.B) && _skillView.activeSelf)
+            else if (Input.GetKeyUp(KeyCode.B) && _skillView.activeSelf && !CraftSettings.SearchFocused)
             {
                 OnHide();
             }

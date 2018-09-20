@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace Assets.Script.MiniMap
 {
-    public class MiniMapControl:MonoBehaviour
+    public class MiniMapControl:MonoBehaviour,IPointerEnterHandler,IPointerExitHandler
     {
         private static Button _plus;
         private static Button _minus;
@@ -13,6 +13,7 @@ namespace Assets.Script.MiniMap
         public int OriginalScope;
         public int MinimumScope;
         private static UnityEngine.Camera _miniMapCamera;
+        private bool _isPointerTrigger;
         private void Start()
         {
             _minus = gameObject.transform.Find("Minus").GetComponent<Button>();
@@ -22,12 +23,12 @@ namespace Assets.Script.MiniMap
             _miniMapCamera = GameObject.FindGameObjectWithTag("Player").transform.Find("MiniMapCamera")
                 .GetComponent<UnityEngine.Camera>();
             _miniMapCamera.orthographicSize = OriginalScope;
-            
+            _isPointerTrigger = false;
         }
 
         private void Update()
         {
-            if (EventSystem.current.IsPointerOverGameObject())
+            if(_isPointerTrigger)
             {
                 if (Input.GetAxis("Mouse ScrollWheel") > 0f) // forward
                 {
@@ -49,6 +50,16 @@ namespace Assets.Script.MiniMap
         {
             if (_miniMapCamera.orthographicSize < MaximumScope)
                 _miniMapCamera.orthographicSize++;
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            _isPointerTrigger = true;
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            _isPointerTrigger = false;
         }
     }
 }

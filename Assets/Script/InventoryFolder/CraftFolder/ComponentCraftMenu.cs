@@ -20,7 +20,7 @@ namespace Assets.Script.InventoryFolder.CraftFolder
             IsNearCraftTable = false;
             IsNearRange = false;
             IsNearTailorKit = false;
-            _craftSettings = new CraftSettings(GameObject.Find("CraftMenu"));
+            _craftSettings = new CraftSettings(GameObject.Find("Graphics").transform.Find("CraftMenu").gameObject);
         }
 
         // Update is called once per frame

@@ -3,6 +3,7 @@ using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
 using Assets.Script.Interaction;
 using Assets.Script.InventoryFolder;
+using Assets.Script.InventoryFolder.CraftFolder;
 using Assets.Script.Menu;
 using UnityEngine;
 using UnityEngine.UI;
@@ -52,7 +53,7 @@ namespace Assets.Scripts.InventoryFolder
         {
             if (_inventory == null)
                 return;
-            if (!MainMenu.Visible && !InGameTime.Visible)
+            if (!MainMenu.Visible && !InGameTime.Visible && !CraftSettings.SearchFocused)
             {
                 if (Input.GetKeyUp(KeyCode.I) && !_inventory.activeSelf)
                 {

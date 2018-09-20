@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Assets.Script.Extension;
 using Assets.Script.Interaction;
+using Assets.Script.InventoryFolder.CraftFolder;
 using Assets.Script.Menu;
 using Assets.Script.SpellFolder;
 using UnityEngine;
@@ -60,18 +61,18 @@ namespace Assets.Script.HUD
 
         void Update()
         {
-            if (Input.GetKeyUp(KeyCode.L) && !Visible)
+            if (MainMenu.Visible || InGameTime.Visible)
+                return;
+            if (Input.GetKeyUp(KeyCode.L) && !Visible && !CraftSettings.SearchFocused)
             {
                 OnVisible();
             }
-            else if (Input.GetKeyUp(KeyCode.L) && Visible)
+            else if (Input.GetKeyUp(KeyCode.L) && Visible && !CraftSettings.SearchFocused)
                 OnHide();
         }
 
         public void OnVisible()
         {
-            if (MainMenu.Visible || InGameTime.Visible)
-                return;
             Utilities.DisableOrEnableAll(_skillBookObject, true);
             MainPanel.OpenWindow(_skillBookObject.name);
             _skillBookObject.transform.SetAsLastSibling();
@@ -86,8 +87,6 @@ namespace Assets.Script.HUD
 
         public void OnHide()
         {
-            if (MainMenu.Visible || InGameTime.Visible)
-                return;
             if (CanIDeactive)   //ošetření kvůli tomu že pokud jsem spustil spell z knihy a knihu poté deaktivoval tak cooldown se zasekl
             {
                 _skillBookObject.SetActive(false);  //deaktivace celého komponentu

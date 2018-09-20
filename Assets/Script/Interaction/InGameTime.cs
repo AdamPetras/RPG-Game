@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.Remoting.Messaging;
 using Assets.Script.HUD;
+using Assets.Script.InventoryFolder.CraftFolder;
 using Assets.Script.Menu;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -260,7 +261,7 @@ namespace Assets.Script.Interaction
 
         public void Update()
         {
-            if (BlackScreen.Visible || MainMenu.Visible)
+            if (BlackScreen.Visible || MainMenu.Visible || CraftSettings.SearchFocused)
                 return;
             if (Input.GetKeyUp(KeyCode.T) && !Visible)
             {

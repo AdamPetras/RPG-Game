@@ -34,7 +34,7 @@ namespace Assets.Script.InventoryFolder.CraftFolder
         private static Transform _infoBackground;
         private static Text _infoName;
         private static Text _infoDescription;
-
+        public static bool SearchFocused;
         public CraftSettings(GameObject mainObj)
         {
             _craftObject = mainObj;
@@ -51,8 +51,8 @@ namespace Assets.Script.InventoryFolder.CraftFolder
             _getCraftComponent.GetCraftingToggle().onValueChanged.AddListener(ChoiseCrafting);
             _getCraftComponent.GetTailoringToggle().onValueChanged.AddListener(ChoiseTailoring);
             _defaultCardList = Database.ItemDatabase.Where(s => s.EProfession != EProfession.None && s.EProfession != EProfession.Fishing).ToList();
-            _craftObject.GetComponent<Canvas>().enabled = true;
             _craftObject.SetActive(false);
+            Debug.Log(_craftObject);
             Utilities.DisableOrEnableAll(_craftObject);
             _getCraftComponent.GetExitKey().GetComponent<Button>().onClick.AddListener(OnHide);
             if (_itemInfo == null)
@@ -89,21 +89,22 @@ namespace Assets.Script.InventoryFolder.CraftFolder
         }
 
         public void Update()
-        {
+        {           
             if (_playerComponent == null)
             {
                 _playerComponent = GameObject.FindWithTag("Player").GetComponent<PlayerComponent>();
             }
-            if (Input.GetKeyUp(KeyCode.P) && !ComponentCraftMenu.Visible)
+            if (Input.GetKeyUp(KeyCode.P) && !ComponentCraftMenu.Visible && !SearchFocused)
             {
                 OnVisible();
             }
-            else if (Input.GetKeyUp(KeyCode.P) && ComponentCraftMenu.Visible)
+            else if (Input.GetKeyUp(KeyCode.P) && ComponentCraftMenu.Visible && !SearchFocused)
             {
                 OnHide();
             }
             if (ComponentCraftMenu.Visible)
             {
+                SearchFocused = _getCraftComponent.GetSearch().isFocused;
                 if (_getCraftComponent.GetSearch().GetComponent<InputField>().text != ""
                 ) //pokud je naplněno pole s vyhledáváním
                 {
