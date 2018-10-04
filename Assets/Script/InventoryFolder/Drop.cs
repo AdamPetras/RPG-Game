@@ -21,16 +21,13 @@ namespace Assets.Script.InventoryFolder
         private Canvas _canvas;
         private GameObject _playerGameObject;
         public static bool Visible;
-        private void Start()
+        private void Awake()
         {
-            DropItemList = new List<NewItem>();
-            DropClickCollider = GetComponentInParent<BoxCollider>();
+            DropItemList = new List<NewItem>();         
             _canvas = GetComponent<Canvas>();
             CONSTSIZE = 0;
-            _viewPortTransform = transform.Find("Background").Find("ScrollView").Find("Viewport");
-            AddItems(GetComponentInParent<EnemyStatistics>().EnemyCharacter.MoneyDrop);
-            AddItems(GetComponentInParent<EnemyStatistics>().EnemyCharacter.DropList);            
-            transform.Find("Background").Find("ExitKey").GetComponent<Button>().onClick.AddListener(Exit);
+            _viewPortTransform = transform.Find("Background").Find("ScrollView").Find("Viewport");      
+            transform.Find("Background").Find("ExitKey").GetComponent<Button>().onClick.AddListener(OnHide);
             gameObject.GetComponent<Canvas>().enabled = false;
             gameObject.GetComponent<GraphicRaycaster>().enabled = false;
             _playerGameObject = GameObject.FindGameObjectWithTag("Player");
@@ -39,45 +36,47 @@ namespace Assets.Script.InventoryFolder
         private void LateUpdate()
         {
             if (DropClickCollider != null)
-                if (Input.GetMouseButtonUp(1) && Utilities.IsRayCastHit(DropClickCollider.transform) && Utilities.IsDistanceLess(gameObject.transform.parent, _playerGameObject.transform, 2f))
+                if (!Visible &&Input.GetMouseButtonUp(1)&& Utilities.IsRayCastHit(DropClickCollider.transform) && Utilities.IsDistanceLess(gameObject.transform.parent, _playerGameObject.transform, 2f))
                 {
-                    Visible = true;
-                    gameObject.GetComponent<Canvas>().enabled = true;
-                    gameObject.GetComponent<GraphicRaycaster>().enabled = true;
-                    MainPanel.OpenWindow("DropWindow");
+                    Show();
                 }
-            if (Input.GetKeyUp(KeyCode.Escape) && gameObject.activeSelf)
-            {
-                Exit();
-            }
             if (_canvas.enabled)
             {
                 DistanceExit();
-                if (_viewPortTransform.childCount == 0)
+                if (DropItemList.Count == 0)
                 {
+                    OnHide();
                     Destroy(gameObject);
                 }
             }
         }
 
+        public void Show()
+        {
+            Visible = true;
+            gameObject.GetComponent<Canvas>().enabled = true;
+            gameObject.GetComponent<GraphicRaycaster>().enabled = true;
+            MainPanel.OpenWindow("DropWindow",gameObject);
+        }
+
         public void DistanceExit()
         {
+            
             if (Utilities.IsDistanceBigger(gameObject.transform.parent, _playerGameObject.transform, 2f))
             {
-                Exit();
+                OnHide();
             }
         }
 
-        public void Exit()
+        public void OnHide()
         {
             Visible = false;
-            //Debug.Log(DropItemList.Count);
             MainPanel.CloseWindow("DropWindow");
             gameObject.GetComponent<Canvas>().enabled = false;
             gameObject.GetComponent<GraphicRaycaster>().enabled = false;
         }
 
-        private void AddItems(DropItem[] items)
+        public void AddItems(DropItem[] items)
         {
             for (int i = 0; i <= items.Length; i++)
             {
@@ -92,8 +91,20 @@ namespace Assets.Script.InventoryFolder
             }
         }
 
+        public void AddItems(DropMoney dropItem)
+        {
+            NewItem item = SimulateDropChance(dropItem);
+            if (item == null)
+                return;
+            AddItemUsefullFunc(item);
+        }
+
         private void AddItemUsefullFunc(NewItem item)
         {
+            Debug.Log(item);
+            if (DropItemList == null)
+                return;
+            
             if (DropItemList.Any(s => s.Name == item.Name && SlotManagement.CanWeStack(item, s.ActualStack)))
             {
                 DropItemList.Find(s => s.Name == item.Name && SlotManagement.CanWeStack(item, s.ActualStack)).ActualStack += item.ActualStack;
@@ -113,15 +124,6 @@ namespace Assets.Script.InventoryFolder
                 dropItem.gameObject.GetComponent<ComponentItem>().EItemState = EItemState.Drop;
                 DropItemList.Add(item);
             }
-        }
-
-
-        private void AddItems(DropMoney dropItem)
-        {       
-            NewItem item = SimulateDropChance(dropItem);
-            if (item == null)
-                return;
-            AddItemUsefullFunc(item);
         }
 
         private NewItem SimulateDropChance(DropItem dropItem)

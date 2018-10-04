@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
+using Assets.Script.Menu;
 using UnityEngine;
 
 namespace Assets.Script.InventoryFolder.ShopFolder
 {
     public class ComponentSalesMan : MonoBehaviour
     {
-        private SalesMan _salesMan;
+        public SalesMan SalesMan;
         private PlayerComponent _playerComponent;
         private List<ObjectGenerate> _salesManList;
         public int Id;
@@ -21,20 +22,22 @@ namespace Assets.Script.InventoryFolder.ShopFolder
         void Start()
         {
             name = Name;
-            _salesMan = new SalesMan(Id, Name, transform.position, gameObject, ItemList);
+            SalesMan = new SalesMan(Id, Name, transform.position, gameObject, ItemList);
             SalesManGenerate.SalesManList.Add(this);
         }
 
         void Update()
         {
+            if (MainMenu.Visible)
+                return;
             if (_playerComponent == null)
             {
                 _playerComponent = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>();
             }
-            if (_salesMan != null)
+            if (SalesMan != null)
             {
-                _salesMan.TalkToSalesMan(transform, _playerComponent.transform);
-                _salesMan.IfTalkingDistance(transform, _playerComponent.transform);
+                SalesMan.TalkToSalesMan(transform, _playerComponent.transform);
+                SalesMan.IfTalkingDistance(transform, _playerComponent.transform);
             }
         }
     }

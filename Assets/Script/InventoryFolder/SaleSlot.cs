@@ -32,27 +32,7 @@ namespace Assets.Script.InventoryFolder
                 NewItem item = new NewItem(NewItem.IdToItem(Id));
                 if (_playerComponent.Money >= item.BuyPrice)
                 {
-
-                    if (Input.GetKey(KeyCode.LeftShift) && StackAmount == null)
-                    {
-                        StackAmount = Instantiate(Resources.Load<GameObject>("Prefab/StackPrefab"));
-                        Transform background = StackAmount.transform.Find("Background");
-                        background.transform.position = eventData.position;
-                        background.transform.Find("ExitKey").GetComponent<Button>().onClick.AddListener(delegate
-                        {
-                            Destroy(StackAmount);
-                        });
-                       /* background.transform.Find("InputField").GetComponent<InputField>().onValueChanged.AddListener(
-                            delegate
-                            {
-                                OnRepairInputValue(StackAmount, item);
-                            });*/
-                        background.transform.Find("Button").GetComponent<Button>().onClick.AddListener(delegate
-                            {
-                                OnStackAmount(StackAmount, item);
-                            });
-                    }
-                    else if (StackAmount == null)
+                    if (StackAmount == null)
                     {
                         if (!SlotManagement.AddToInventory(item))
                         {

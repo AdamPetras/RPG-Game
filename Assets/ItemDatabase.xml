@@ -117,7 +117,7 @@ Rank                -> určuje hodnost jednotlivých předmětů
     <Profession></Profession>
     <ProfessionLevelNeed>0</ProfessionLevelNeed>
     <ProfessionExperiences>0</ProfessionExperiences>
-    <BuyPrice>0</BuyPrice>
+    <BuyPrice>2</BuyPrice>
     <SellPrice>1</SellPrice>
     <Loot>3</Loot>
     <MaximumStack>10</MaximumStack>

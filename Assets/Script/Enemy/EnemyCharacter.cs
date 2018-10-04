@@ -115,6 +115,9 @@ namespace Assets.Script.Enemy
                 GameObject dropObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/DropPrefab"));
                 dropObj.name = "DropPrefab";
                 dropObj.transform.SetParent(_enemyTransform);
+                dropObj.GetComponent<Drop>().AddItems(MoneyDrop);
+                dropObj.GetComponent<Drop>().AddItems(DropList);
+                dropObj.GetComponent<Drop>().DropClickCollider = _enemyTransform.GetComponent<BoxCollider>();
                 _dropExist = true;
             }
         }

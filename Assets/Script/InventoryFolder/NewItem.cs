@@ -209,5 +209,11 @@ namespace Assets.Scripts.InventoryFolder
         {
             return Database.ItemDatabase.Any(s => s.ID == id);
         }
+
+        public override string ToString()
+        {
+            return "ID:" + ID + " Name:" + Name + " Quantity:" + Quantity + " ActualStack:" + ActualStack +
+                   " MaximumStack:" + MaximumStack + " BuyPrice:" + BuyPrice;
+        }
     }
 }

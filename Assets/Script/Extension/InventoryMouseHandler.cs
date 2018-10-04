@@ -28,11 +28,6 @@ namespace Assets.Script.Extension
         private static Button _dialogNo;
         private static Button _dialogExit;
         private static Transform _dialogText;
-        public static GameObject StackPrefab;
-        private static Transform _stackBackground;
-        private static Transform _stackExitKey;
-        private static InputField _stackInput;
-        private static Button _stackButton;
         private static GameObject _itemInfo;
         private static Transform _infoBackground;
         private static Text _infoName;
@@ -46,8 +41,6 @@ namespace Assets.Script.Extension
         {
             if (Dialog == null)
                 DialogInstantiate();
-            if (StackPrefab == null)
-                StackInstantiate();
             if (_itemInfo == null)
                 InfoInstantiate();
         }
@@ -57,40 +50,18 @@ namespace Assets.Script.Extension
             DragPanel = GameObject.Find("DragPanel").transform.Find("Background");
             _playerComponent = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>();
             _gameMasterItem = GameObject.Find("GameMaster").GetComponent<ComponentInventory>();
-        }
-
-        #region GraphicsInstantiate   
-
-        private void StackInstantiate()
-        {
-            StackPrefab = Instantiate(Resources.Load<GameObject>("Prefab/StackPrefab"));
-            StackPrefab.name = "StackPrefab";
-            StackPrefab.SetActive(false);
-            _stackBackground = StackPrefab.transform.Find("Background");
-            _stackExitKey = _stackBackground.Find("ExitKey");
-            _stackInput = _stackBackground.Find("InputField").GetComponent<InputField>();
-            _stackButton = _stackBackground.Find("Button").GetComponent<Button>();
-            _stackExitKey.GetComponent<Button>().onClick.AddListener(delegate
-            {
-                GetComponent<CanvasGroup>().blocksRaycasts = true;
-                StackPrefab.SetActive(false);
-            });
-            _stackInput.onValueChanged.AddListener(
-                delegate
-                {
-                    OnStackValueChanged();
-                });
-            //přidání funkce na button (vytvoří nový item atd.)
-            _stackButton.onClick.AddListener(delegate
+            StackEnterComponent.SetOnValueChanged(delegate { OnStackValueChanged();});
+            StackEnterComponent.SetOnButtonClick(delegate
             {
                 if (_clickedItemTransform.GetComponent<ComponentItem>().EItemState == EItemState.Shop)
                     OnStackAmount();
                 else
                     OnClickButtonStack(_clickedItemTransform.GetComponent<ComponentItem>());
                 //_clickedItemTransform.GetComponent<CanvasGroup>().blocksRaycasts = true;
-
             });
         }
+
+        #region GraphicsInstantiate   
 
         private void DialogInstantiate()
         {
@@ -254,8 +225,8 @@ namespace Assets.Script.Extension
             CancelInvoke("ShowInfo");
             HideInfo();
             GetComponent<CanvasGroup>().blocksRaycasts = true;
-            if (StackPrefab != null)
-                StackPrefab.SetActive(false);
+            if (StackEnterComponent.StackPrefab != null)
+                StackEnterComponent.StackPrefab.SetActive(false);
         }
 
         private void ShowInfo()
@@ -293,21 +264,14 @@ namespace Assets.Script.Extension
             if (eventData.button == PointerEventData.InputButton.Right && Input.GetKey(KeyCode.LeftShift))      //tabulka pro rozdělení itemů z 5ti stacků třeba na 2 a 3 stacky
             {
                 ComponentItem gameobjItem = gameObject.GetComponent<ComponentItem>();
-                if (gameobjItem.ActualStack <= 1 && gameobjItem.EItemState != EItemState.Shop)
+                if (gameobjItem.ActualStack <= 1)
                     return;
-
-                if (gameobjItem.EItemState == EItemState.Inventory)    //pokud je objekt v inventáři (nemůžu to dělat v dropu)
-                {
-                    //vytvoření objektu kde vložíme počet stacků
-                    StackPrefab.SetActive(true);
-                    _stackBackground.position = eventData.position - _stackBackground.GetComponent<RectTransform>().sizeDelta / 2;      //pozicování podlemyši
-                    //přidání funkce která ošetřuje aby nebylo vloženo velké číslo
-                }
-                else if (gameobjItem.EItemState == EItemState.Shop)
-                {
-                    _stackBackground.transform.position = eventData.position;
-                    StackPrefab.SetActive(true);
-                }
+                if (gameobjItem.EItemState != EItemState.Shop && gameobjItem.EItemState != EItemState.Inventory)
+                    return;            
+                //vytvoření objektu kde vložíme počet stacků
+                StackEnterComponent.StackPrefab.SetActive(true);
+                StackEnterComponent.SetPosition(eventData.position - StackEnterComponent.GetBackgroundRect().sizeDelta / 2);      //pozicování podlemyši
+                //Debug.Log(transform.GetComponent<ComponentItem>().ToString());
                 _clickedItemTransform = transform;
             }
             else if (eventData.button == PointerEventData.InputButton.Right)    //pokud je pouze kliknutí pravým
@@ -366,10 +330,10 @@ namespace Assets.Script.Extension
                 else if (gameobjItem.EItemState == EItemState.Drop)    //pokud je objekt v dropu
                 {
                     Drop dr = gameObject.transform.parent.parent.parent.parent.parent.parent.GetComponent<Drop>();
-                    dr.DropItemList.Remove(
-                        dr.DropItemList.Find(s => s.Name == gameObject.transform.GetComponent<ComponentItem>().Name));
+                    Debug.Log(gameObject.transform.GetComponent<ComponentItem>().ToString());
+                    dr.DropItemList.RemoveAt(dr.DropItemList.FindIndex(s => s.ID == gameObject.transform.GetComponent<ComponentItem>().ID));
                     gameObject.transform.parent.parent.Find("Text").GetComponent<Text>().text = "";
-                    SlotManagement.AddToInventory(gameObject);      //přidá se do inventáře
+                    SlotManagement.AddToInventory(gameObject);      //přidá se do inventáře       
                     HideInfo();     //skrytí info (nemusí být ale pak je prodleva než se to skryje)
                 }
                 else if (gameobjItem.EItemState == EItemState.Armor)
@@ -393,34 +357,35 @@ namespace Assets.Script.Extension
                         _playerComponent = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>();
                     if (SlotManagement.AreTheseMoneyEnough(item.BuyPrice))
                     {
-                        StackPrefab.SetActive(false);
+                        StackEnterComponent.StackPrefab.SetActive(false);
                         if (!SlotManagement.AddToInventory(item))
                         {
                             Debug.LogWarning("Inventory is full");
                             return;
                         }
                         SlotManagement.MoneyWithdraw(item.BuyPrice);
-                    }
+                    }else Information.SetText("Not enough money!", Color.red, 5);
                 }
             }
 
         }
 
-        private void OnStackAmount()
+        private static void OnStackAmount()
         {
             if (_clickedItemTransform == null)
                 return;
             int stack;
-            Int32.TryParse(_stackInput.text, out stack);
+            Int32.TryParse(StackEnterComponent.GetText(), out stack);
             NewItem item = new NewItem(NewItem.IdToItem(_clickedItemTransform.GetComponent<ComponentItem>().ID));
             Debug.Log("StackAmount " + stack + " Item name " + item.Name);
 
             if (!SlotManagement.AreTheseMoneyEnough((uint)(stack * item.BuyPrice)))
             {
+                Information.SetText("Not enough money!",Color.red,5);
                 return;
             }
-            _stackInput.text = "";
-            StackPrefab.SetActive(false);
+            StackEnterComponent.SetText("");
+            StackEnterComponent.StackPrefab.SetActive(false);
             if (stack <= 0)
             {
                 return;
@@ -434,23 +399,23 @@ namespace Assets.Script.Extension
             SlotManagement.MoneyWithdraw((uint)(stack * item.BuyPrice));
         }
 
-        private void OnStackValueChanged()
+        private static void OnStackValueChanged()
         {
             int input;
-            Int32.TryParse(_stackInput.text, out input);
-            ComponentItem transformItem = _clickedItemTransform.GetComponent<ComponentItem>();
+            Int32.TryParse(StackEnterComponent.GetText(), out input);
+            ComponentItem transformItem = _clickedItemTransform.GetComponent<ComponentItem>();   
             //pokud je vloženo větší číslo než je počet stacků
             if (input > transformItem.ActualStack)
             {
                 input = transformItem.ActualStack;    //číslo je upraveno na stack
             }
-            _stackInput.text = input.ToString();
+            StackEnterComponent.SetText(input.ToString());
         }
 
         private static void OnClickButtonStack(ComponentItem transformItem)
         {
             int input;
-            Int32.TryParse(_stackInput.text, out input);   //parsování inputu
+            Int32.TryParse(StackEnterComponent.GetText(), out input);   //parsování inputu
             if (input == 0)
             {
                 return;
@@ -459,7 +424,7 @@ namespace Assets.Script.Extension
             if (slot == null)
             {
                 Debug.LogWarning("Inventory is full");
-                StackPrefab.SetActive(false);
+                StackEnterComponent.StackPrefab.SetActive(false);
                 return;
             }
             slot.GetComponent<Slot>().Occupied = true;      // nastavení slotu že je okupován
@@ -470,6 +435,7 @@ namespace Assets.Script.Extension
             {
                 slot.GetComponent<Slot>().Occupied = false;
                 Debug.Log("UnderFlow");
+                Destroy(obj);
                 return;
             }
             else
@@ -482,7 +448,7 @@ namespace Assets.Script.Extension
                 SlotManagement.ShowStack(transformItem);      //zobrazení stacku
             }
             SlotManagement.ShowStack(objItem);        //zobrazení stacku
-            StackPrefab.SetActive(false);  //zničení okna pro zadávání počtu stacků
+            StackEnterComponent.StackPrefab.SetActive(false);  //zničení okna pro zadávání počtu stacků
         }
     }
 }

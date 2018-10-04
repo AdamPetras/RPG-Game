@@ -34,7 +34,9 @@ namespace Assets.Script.SpellFolder
             SpellList.Add(this);
             isCasting = false;
             cantCast = false;
-            gameObject.GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 1);
+            Debug.Log("AA");
+            if(!Spell.Unlocked)
+                GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 1);
             GetComponent<Button>().onClick.AddListener(delegate
             {
                 if (Conditions(Spell.ManaCost))

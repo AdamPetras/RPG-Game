@@ -98,8 +98,8 @@ namespace Assets.Script.InventoryFolder
         private static bool AddItemByStack(ComponentItem item)
         {
             int differ = item.ActualStack;
-            List<ComponentItem> foundItems;
-            if ((foundItems = FindAllItemInInventory(item.ID)).Count > 0)
+            List<ComponentItem> foundItems = FindAllItemInInventory(item.ID);
+            if (foundItems.Count > 0)
             {
                 foreach (ComponentItem foundItem in foundItems)
                 {
@@ -161,7 +161,6 @@ namespace Assets.Script.InventoryFolder
 
         public static bool AddToInventory(GameObject itemObject)
         {
-            
             return AddItemByStack(itemObject.GetComponent<ComponentItem>());
         }
 

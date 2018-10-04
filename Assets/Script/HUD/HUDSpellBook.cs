@@ -74,7 +74,7 @@ namespace Assets.Script.HUD
         public void OnVisible()
         {
             Utilities.DisableOrEnableAll(_skillBookObject, true);
-            MainPanel.OpenWindow(_skillBookObject.name);
+            MainPanel.OpenWindow(_skillBookObject.name,gameObject);
             _skillBookObject.transform.SetAsLastSibling();
             Visible = true;
             if (_shown)

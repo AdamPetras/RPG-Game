@@ -109,7 +109,7 @@ namespace Assets.Script.Menu
             if (BlackScreen.Visible || InGameTime.Visible)
                 return;
             transform.SetAsLastSibling();
-            MainPanel.OpenWindow(name);
+            MainPanel.OpenWindow(name,gameObject);
             _backgroundTransform.gameObject.SetActive(true);
             Visible = true;
         }

@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Script.CharacterFolder;
 using Assets.Script.Extension;
+using Assets.Script.InventoryFolder;
 using Assets.Script.InventoryFolder.CraftFolder;
+using Assets.Script.InventoryFolder.ShopFolder;
 using Assets.Script.Menu;
+using Assets.Script.QuestFolder;
 using Assets.Scripts.InventoryFolder.CraftFolder;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -18,11 +21,12 @@ namespace Assets.Script.HUD
         {
             public string Name;
             public int Index;
-
-            public WindowOpen(string name, int index)
+            public GameObject GameObject;
+            public WindowOpen(string name, int index,GameObject gameObject)
             {
                 Name = name;
                 Index = index;
+                GameObject = gameObject;
             }
         }
 
@@ -72,7 +76,6 @@ namespace Assets.Script.HUD
         // Update is called once per frame
         void Update()
         {
-            //Debug.Log(OpenedWindows.Count);
             if (!startRefresh || PlayerComponent.ExperiencesPooling)
             {
                 _expRect.sizeDelta = new Vector2(CurrBarLenght(_playerComponent.ExpCurrent, _playerComponent.ExpToNextLevel),
@@ -145,7 +148,7 @@ namespace Assets.Script.HUD
             else _gameMaster.GetComponent<HUDProfessionView>().OnHide();
         }
 
-        private void OnShowStats()
+       private void OnShowStats()
         {
             if (!HUDStatsView.Visible)
                 _gameMaster.GetComponent<HUDStatsView>().OnVisible();
@@ -157,28 +160,25 @@ namespace Assets.Script.HUD
             return (int)((currSize / maxSize) * MAXBARLENGHT);
         }
 
-        public static void OpenWindow(string objName)
+        public static void OpenWindow(string objName,GameObject gameObject)
         {
-            OpenedWindows.Add(new WindowOpen(objName, NumberOfWindows));
+            OpenedWindows.Add(new WindowOpen(objName, NumberOfWindows, gameObject));
             NumberOfWindows++;
             if (NumberOfWindows > 2)
             {
-                Selector(OpenedWindows.First().Name);
+                Debug.Log("delOne");
+                Selector(OpenedWindows.First());
             }
+           
         }
 
         public static void CloseAllWindows()
         {
-            if(HUDStatsView.Visible)
-            _gameMaster.GetComponent<HUDStatsView>().OnHide();
-            if(HUDSpellBook.Visible)
-            _gameMaster.GetComponent<HUDSpellBook>().OnHide();
-            if(HUDQuestList.Visible)
-            HUDQuestList.OnHide();
-            if(HUDProfessionView.Visible)
-            _gameMaster.GetComponent<HUDProfessionView>().OnHide();
-            if(ComponentCraftMenu.Visible)
-            _gameMaster.GetComponent<ComponentCraftMenu>().OnHide();
+            while (OpenedWindows.Count >= 1)
+            {
+
+                Selector(OpenedWindows.First());
+            }
         }
 
         public static void CloseWindow(string objName)
@@ -196,10 +196,10 @@ namespace Assets.Script.HUD
             return OpenedWindows.Count != 0;
         }
 
-        private static void Selector(string window)
+        private static void Selector(WindowOpen window)
         {
             
-            switch (window)
+            switch (window.Name)
             {
                 case "StatsView":
                     _gameMaster.GetComponent<HUDStatsView>().OnHide();
@@ -218,6 +218,15 @@ namespace Assets.Script.HUD
                     break;
                 case "CraftMenu":
                     _gameMaster.GetComponent<ComponentCraftMenu>().OnHide();
+                    break;
+                case "QuestWindow":
+                    window.GameObject.GetComponent<QuestMasterObject>().ThisQuestMaster.OnHide();
+                    break;
+                case "ShopWindow":
+                    window.GameObject.GetComponent<ComponentSalesMan>().SalesMan.OnHide();
+                    break;
+                case "DropWindow":
+                    window.GameObject.GetComponent<Drop>().OnHide();
                     break;
             }
         }

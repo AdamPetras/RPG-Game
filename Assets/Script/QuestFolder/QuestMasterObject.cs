@@ -3,6 +3,7 @@ using System.Linq;
 using Assets.Script.CharacterFolder;
 using Assets.Script.Enemy;
 using Assets.Script.Extension;
+using Assets.Script.Menu;
 using UnityEngine;
 
 namespace Assets.Script.QuestFolder
@@ -45,6 +46,8 @@ namespace Assets.Script.QuestFolder
         // Update is called once per frame
         void Update()
         {
+            if (MainMenu.Visible)
+                return;
             if (_playerComponent == null)
             {
                 _playerComponent = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerComponent>();

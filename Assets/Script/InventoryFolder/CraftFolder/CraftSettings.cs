@@ -72,7 +72,7 @@ namespace Assets.Script.InventoryFolder.CraftFolder
             if (MainMenu.Visible || InGameTime.Visible)
                 return;
             _craftObject.transform.SetAsLastSibling();
-            MainPanel.OpenWindow(_craftObject.name);
+            MainPanel.OpenWindow(_craftObject.name,_craftObject);
             _craftObject.SetActive(true);
             Utilities.DisableOrEnableAll(_craftObject, true);
             ComponentCraftMenu.Visible = true;

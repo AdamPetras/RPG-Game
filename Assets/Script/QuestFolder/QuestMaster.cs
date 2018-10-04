@@ -84,13 +84,13 @@ namespace Assets.Script.QuestFolder
                 _applyButton.gameObject.SetActive(false);
                 GameObject.Destroy(_questInfo);
                 _exitButton.GetComponent<Button>().onClick.RemoveAllListeners();
-                _exitButton.GetComponent<Button>().onClick.AddListener(OnExit);
+                _exitButton.GetComponent<Button>().onClick.AddListener(OnHide);
             }
             else
-                OnExit();
+                OnHide();
         }
 
-        public void OnExit()
+        public void OnHide()
         {
             MainPanel.CloseWindow("QuestWindow");
             EQuestMasterState = EQuestMasterState.Choise;
@@ -99,7 +99,7 @@ namespace Assets.Script.QuestFolder
             QuestMasterObject.Visible = false;
             Talking = false;
             _exitButton.GetComponent<Button>().onClick.RemoveAllListeners();
-            _exitButton.GetComponent<Button>().onClick.AddListener(OnExit);
+            _exitButton.GetComponent<Button>().onClick.AddListener(OnHide);
             GameObject.Destroy(_questInfo);
             foreach (GameObject obj in _questButtons)
             {
@@ -205,8 +205,8 @@ namespace Assets.Script.QuestFolder
             _background.Find("DragPanel").Find("Text").GetComponent<Text>().text = Name;
             _applyButton.gameObject.SetActive(false);
             _applyButton.GetComponent<Button>().onClick.AddListener(OnAccept);
-            _exitButton.GetComponent<Button>().onClick.AddListener(OnExit);
-            _exitKey.GetComponent<Button>().onClick.AddListener(OnExit);
+            _exitButton.GetComponent<Button>().onClick.AddListener(OnHide);
+            _exitKey.GetComponent<Button>().onClick.AddListener(OnHide);
             _questList.SetActive(false);
             Utilities.DisableOrEnableAll(_questList);
         }
@@ -216,10 +216,11 @@ namespace Assets.Script.QuestFolder
         {
             if (Talking)
             {
-                QuestMasterObject.Visible = true;
+                if (!QuestMasterObject.Visible)
+                    MainPanel.OpenWindow("QuestWindow", Prefab);
+                QuestMasterObject.Visible = true;  
                 if (!_instantiate)
-                {
-                    MainPanel.OpenWindow("QuestWindow");
+                {                  
                     _questList = GameObject.Instantiate(Resources.Load<GameObject>("Prefab/QuestListPrefab"), GameObject.Find("Graphics").transform);
                     _questList.name = "QuestListPrefab";
                     CanvasInstantiate();

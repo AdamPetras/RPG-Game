@@ -66,7 +66,7 @@ namespace Assets.Script.HUD
         {
             if (MainMenu.Visible || InGameTime.Visible)
                 return;
-            MainPanel.OpenWindow(_skillView.name);
+            MainPanel.OpenWindow(_skillView.name,gameObject);
             _skillView.transform.SetAsLastSibling();
             _skillView.SetActive(true);
             Utilities.DisableOrEnableAll(_skillView, true);

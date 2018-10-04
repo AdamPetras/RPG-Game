@@ -61,8 +61,8 @@ namespace Assets.Script.InventoryFolder.ShopFolder
             _exitButton = _background.Find("Exit");
             _exitKey = _background.Find("ExitKey");
             _background.Find("DragPanel").Find("Text").GetComponent<Text>().text = Name;
-            _exitButton.GetComponent<Button>().onClick.AddListener(OnExit);
-            _exitKey.GetComponent<Button>().onClick.AddListener(OnExit);
+            _exitButton.GetComponent<Button>().onClick.AddListener(OnHide);
+            _exitKey.GetComponent<Button>().onClick.AddListener(OnHide);
             _viewport = _background.Find("ScrollView").Find("Viewport");
             _acceptButton.gameObject.SetActive(false);
             _salesmanHud.SetActive(false);
@@ -70,26 +70,28 @@ namespace Assets.Script.InventoryFolder.ShopFolder
             Init();
         }
 
-        private void OnExit()
+        public void OnVisible()
+        {
+            _salesmanHud.SetActive(true);
+            Utilities.DisableOrEnableAll(_salesmanHud, true);
+            ComponentSalesMan.Visible = true;
+            MainPanel.OpenWindow("ShopWindow", Prefab);
+        }
+
+        public void OnHide()
         {
             _salesmanHud.SetActive(false);
             Utilities.DisableOrEnableAll(_salesmanHud);
             ComponentSalesMan.Visible = false;
-            MainPanel.CloseWindow(_salesmanHud.name);
+            MainPanel.CloseWindow("ShopWindow");
         }
-
         public void TalkToSalesMan(Transform transform, Transform playerTransform)
         {
-            if (Input.GetKeyUp(KeyCode.Escape))
-                OnExit();
             if (transform != null && playerTransform != null)
                 if (Input.GetMouseButtonUp(1) && Utilities.IsDistanceLess(transform,playerTransform,2f))
                     if (Utilities.IsRayCastHit(transform))
                     {
-                        _salesmanHud.SetActive(true);
-                        Utilities.DisableOrEnableAll(_salesmanHud, true);
-                        ComponentSalesMan.Visible = true;
-                        MainPanel.OpenWindow(_salesmanHud.name);
+                        OnVisible();
                     }
         }
 
@@ -99,7 +101,7 @@ namespace Assets.Script.InventoryFolder.ShopFolder
             {
                 if (Utilities.IsDistanceBigger(transform, playerTransform, 2f))
                 {
-                    OnExit();
+                    OnHide();
                 }
             }
         }

@@ -133,13 +133,10 @@ namespace Assets.Script.QuestFolder
             {           //mluví
                 ShowAvailable();
                 Talking = true;
-                QuestMasterObject.Visible = true;
-                if (Input.GetKeyUp(KeyCode.Escape) && QuestMasterObject.Visible)
-                    OnExit();
                 if (Vector3.Distance(Position, _playerComponent.gameObject.transform.position) > 2 ||
                     EQuestMasterState == EQuestMasterState.None) //pokud se vzdálí nebo ukončí řeč
                 {
-                    OnExit();
+                    OnHide();
                 }
             }
         }

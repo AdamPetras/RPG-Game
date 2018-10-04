@@ -182,7 +182,7 @@ namespace Assets.Script.HUD
             if (MainMenu.Visible || InGameTime.Visible)
                 return;
             _questListObject.transform.SetAsLastSibling();
-            MainPanel.OpenWindow(_questListObject.name);
+            MainPanel.OpenWindow(_questListObject.name, _questListObject);
             _questListObject.SetActive(true);
             Utilities.DisableOrEnableAll(_questListObject, true);
             Visible = true;

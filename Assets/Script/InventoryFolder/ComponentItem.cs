@@ -43,6 +43,11 @@ namespace Assets.Script.InventoryFolder
         {
 
         }
+        public override string ToString()
+        {
+            return "ID:" + ID + " Name:" + Name + " Quantity:" + Quantity + " ActualStack:" + ActualStack +
+                   " MaximumStack:" + MaximumStack + " BuyPrice:" + BuyPrice+" EItemState:"+EItemState;
+        }
         /*public void OnDrop(PointerEventData eventData)
         {
             if (InventoryMouseHandler.itemBeingDragged == null)

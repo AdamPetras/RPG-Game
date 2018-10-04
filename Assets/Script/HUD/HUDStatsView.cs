@@ -52,7 +52,7 @@ namespace Assets.Script.HUD
         {
             if (MainMenu.Visible || InGameTime.Visible)
                 return;
-            MainPanel.OpenWindow(_statsView.name);
+            MainPanel.OpenWindow(_statsView.name,gameObject);
             _statsView.transform.SetAsLastSibling();
             _statsView.GetComponent<RectTransform>().position = beforePosition;
             Utilities.DisableOrEnableAll(_statsView, true);

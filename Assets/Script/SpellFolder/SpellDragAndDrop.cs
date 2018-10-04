@@ -16,7 +16,7 @@ namespace Assets.Script.SpellFolder
         }
 
         public void OnBeginDrag(PointerEventData eventData)
-        {
+        {  
             if (!gameObject.GetComponent<ComponentSpell>().Spell.Unlocked)
             {
                 return;
@@ -31,7 +31,7 @@ namespace Assets.Script.SpellFolder
                 }
                 else if (transform.parent.GetComponent<SpellSlot>().IsBook)
                 {
-                    //Debug.Log("newObj");
+                    
                     GameObject newObj = Instantiate(gameObject, _startParent);
                     newObj.name = "Spell";
                     newObj.GetComponent<ComponentSpell>().Spell = gameObject.GetComponent<ComponentSpell>().Spell;
@@ -41,7 +41,8 @@ namespace Assets.Script.SpellFolder
                     }
                     newObj.GetComponent<CanvasGroup>().blocksRaycasts = false;
                     SpellDraged = newObj;
-                }
+                    
+                }         
             SpellDraged.transform.SetParent(DragPanel); //nastavení na drag panel aby šlo vidět jak se přetahuje
         }
         public void OnDrag(PointerEventData eventData)
@@ -50,7 +51,7 @@ namespace Assets.Script.SpellFolder
             {
                 return;
             }
-            SpellDraged.transform.position = Input.mousePosition;
+            SpellDraged.transform.position = Input.mousePosition;            
         }
 
         public void OnEndDrag(PointerEventData eventData)
